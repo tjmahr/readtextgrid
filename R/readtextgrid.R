@@ -4,17 +4,31 @@
 #' @rdname read_textgrid
 #' @param path a path to a dataframe
 #' @param lines alternatively, the lines of a textgrid file
+#' @param file an optional value to use for the `file` column. For
+#'   `read_textgrid()`, the default is the base filename of the input file. For
+#'   `read_textgrid_lines()`, the default is `NA`.
 #' @return a tibble with one row per textgrid annotation
 #' @export
-read_textgrid <- function(path) {
+#' @examples
+#' tg <- system.file("Mary_John_bell.TextGrid", package = "readtextgrid")
+#' read_textgrid(tg)
+read_textgrid <- function(path, file = NULL) {
+  if (is.null(file)) {
+    file <- basename(path)
+  }
+
   path %>%
     readr::read_lines() %>%
-    read_textgrid_lines(file = basename(path))
+    read_textgrid_lines(file = file)
 }
 
 #' @rdname read_textgrid
 #' @export
-read_textgrid_lines <- function(lines, file = NA_character_) {
+read_textgrid_lines <- function(lines, file = NULL) {
+  if (is.null(file)) {
+    file <- NA_character_
+  }
+
   lines %>%
     parse_textgrid_lines() %>%
     tibble::add_column(file = file, .before = 1)

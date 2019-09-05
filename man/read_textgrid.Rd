@@ -5,12 +5,16 @@
 \alias{read_textgrid_lines}
 \title{Read a textgrid file into a tibble}
 \usage{
-read_textgrid(path)
+read_textgrid(path, file = NULL)
 
-read_textgrid_lines(lines, file = NA_character_)
+read_textgrid_lines(lines, file = NULL)
 }
 \arguments{
 \item{path}{a path to a dataframe}
+
+\item{file}{an optional value to use for the \code{file} column. For
+\code{read_textgrid()}, the default is the base filename of the input file. For
+\code{read_textgrid_lines()}, the default is \code{NA}.}
 
 \item{lines}{alternatively, the lines of a textgrid file}
 }
@@ -19,4 +23,8 @@ a tibble with one row per textgrid annotation
 }
 \description{
 Read a textgrid file into a tibble
+}
+\examples{
+tg <- system.file("Mary_John_bell.TextGrid", package = "readtextgrid")
+read_textgrid(tg)
 }

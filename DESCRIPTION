@@ -25,6 +25,8 @@ Imports:
     tibble,
     purrr,
     readr,
-    stringr
+    stringr,
+    dplyr
 URL: https://github.com/tjmahr/readtextgrid
 BugReports: https://github.com/tjmahr/readtextgrid/issues
+Roxygen: list(markdown = TRUE)
