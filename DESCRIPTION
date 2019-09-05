@@ -26,3 +26,5 @@ Imports:
     purrr,
     readr,
     stringr
+URL: https://github.com/tjmahr/readtextgrid
+BugReports: https://github.com/tjmahr/readtextgrid/issues
