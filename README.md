@@ -5,6 +5,8 @@
 
 <!-- badges: start -->
 
+[![Travis build
+status](https://travis-ci.org/tjmahr/readtextgrid.svg?branch=master)](https://travis-ci.org/tjmahr/readtextgrid)
 <!-- badges: end -->
 
 The goal of readtextgrid is to provide a textgrid parser for R.
