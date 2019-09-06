@@ -29,81 +29,97 @@ read_textgrid_lines <- function(lines, file = NULL) {
     file <- NA_character_
   }
 
+  stopifnot(str_detect_any(lines, "ooTextFile"))
+
   lines %>%
     parse_textgrid_lines() %>%
+    tibble::as_tibble() %>%
     tibble::add_column(file = file, .before = 1)
 }
 
 parse_textgrid_lines <- function(lines) {
   lines %>%
     slice_sections("item") %>%
-    purrr::map_dfr(parse_item_lines)
+    purrr::map(parse_item_lines) %>%
+    plyr::ldply(as.data.frame, stringsAsFactors = FALSE)
 }
 
 slice_sections <- function(lines, section_head) {
   re <- sprintf("^\\s+%s \\[\\d+\\]:", section_head)
   starts <- stringr::str_which(lines, re)
   ends <- c(starts[-1] - 1, length(lines))
-  purrr::map2(starts, ends, function(x, y) lines[seq(x, y, by = 1)]
-  )
+  purrr::map2(starts, ends, function(x, y) lines[seq(x, y, by = 1)])
 }
 
 
-parse_item_lines <- function(lines) {
-  item_num <- lines[1] %>%
+parse_item_lines <- function(lines_items) {
+  item_num <- lines_items[1] %>%
     stringr::str_extract("\\d+") %>%
     as.numeric()
 
-  tier_type <- lines %>% get_field("class")
-  tier_name <- lines %>% get_field("name")
-  tier_xmin <- lines %>% get_field("xmin") %>% as.numeric()
-  tier_xmax <- lines %>% get_field("xmax") %>% as.numeric()
+  tier_type <- get_field(lines_items, "class")
+  tier_name <- get_field(lines_items, "name")
+  tier_xmin <- get_field_dbl(lines_items, "xmin")
+  tier_xmax <- get_field_dbl(lines_items, "xmax")
 
   stopifnot(tier_type %in% c("IntervalTier", "TextTier"))
 
   if (tier_type == "IntervalTier") {
-    df <- lines %>%
-      slice_sections("intervals") %>%
-      purrr::map(get_field_list, fields = c("xmin", "xmax", "text")) %>%
-      purrr::imap_dfr(add_annotation_num)
+    df <- parse_interval_tier(lines_items)
   } else {
-    no_points <- lines %>%
-      stringr::str_detect("points: size = 0") %>%
-      any()
-
-    if (!no_points) {
-      df <- lines %>%
-        slice_sections("points") %>%
-        purrr::map(get_field_list, fields = c("number", "mark")) %>%
-        purrr::imap_dfr(add_annotation_num)
-
-      df[["xmin"]] <- df[["number"]]
-      df[["xmax"]] <- df[["number"]]
-      df[["text"]] <- df[["mark"]]
-      df[["mark"]] <- NULL
-      df[["number"]] <- NULL
-    } else {
-      df <- tibble::tibble(
-        xmin = NA,
-        xmax = NA,
-        text = NA_character_,
-        annotation_num = NA
-      )
-    }
+    df <- parse_point_tier(lines_items)
   }
 
   df[["xmin"]] <- as.numeric(df[["xmin"]])
   df[["xmax"]] <- as.numeric(df[["xmax"]])
 
-  df %>%
-    tibble::add_column(
-      tier_num  = item_num,
-      tier_name = tier_name,
-      tier_type = tier_type,
-      tier_xmin = tier_xmin,
-      tier_xmax = tier_xmax,
-      .before = 1
+  tibble::add_column(
+    .data = df,
+    tier_num  = item_num,
+    tier_name = tier_name,
+    tier_type = tier_type,
+    tier_xmin = tier_xmin,
+    tier_xmax = tier_xmax,
+    .before = 1
+  )
+}
+
+parse_interval_tier <- function(lines_interval_tier) {
+  lines_interval_tier %>%
+    slice_sections("intervals") %>%
+    purrr::map(get_field_list, fields = c("xmin", "xmax", "text")) %>%
+    purrr::imap(add_annotation_num) %>%
+    plyr::ldply(as.data.frame, stringsAsFactors = FALSE)
+}
+
+parse_point_tier <- function(lines_point_tier) {
+  no_points <- str_detect_any(lines_point_tier, "points: size = 0")
+
+  if (!no_points) {
+    df <- lines_point_tier %>%
+      slice_sections("points") %>%
+      purrr::map(get_field_list, fields = c("number", "mark")) %>%
+      purrr::imap(add_annotation_num) %>%
+      plyr::ldply(as.data.frame, stringsAsFactors = FALSE)
+
+    # We treat points as zero-width intervals
+    df[["xmin"]] <- df[["number"]]
+    df[["xmax"]] <- df[["number"]]
+    df[["text"]] <- df[["mark"]]
+    df[["mark"]] <- NULL
+    df[["number"]] <- NULL
+  } else {
+    # A point interval with no points should be represented in the results.
+    df <- data.frame(
+      xmin = NA,
+      xmax = NA,
+      text = NA_character_,
+      annotation_num = NA,
+      stringsAsFactors = FALSE
     )
+  }
+
+  df
 }
 
 add_annotation_num <- function(x, y) {
@@ -112,9 +128,10 @@ add_annotation_num <- function(x, y) {
 }
 
 get_field_list <- function(lines, fields) {
-  fields %>%
-    lapply(function(x) get_field(lines, x)) %>%
-    stats::setNames(fields)
+  stats::setNames(
+    lapply(fields, function(x) get_field(lines, x)),
+    fields
+  )
 }
 
 # Find first match of "[field] = [value]", returning [value]
@@ -129,5 +146,19 @@ get_field <- function(lines, field) {
     str_unquote()
 }
 
-remove_na <- function(xs) xs[!is.na(xs)]
-str_unquote <- function(xs) stringr::str_remove_all(xs, "^\"|\"$")
+# Find first match of "[field] = [value]", returning [value]
+get_field_dbl <- function(lines, field) {
+  as.numeric(get_field(lines, field))
+}
+
+remove_na <- function(xs) {
+  xs[!is.na(xs)]
+}
+
+str_unquote <- function(xs) {
+  stringr::str_remove_all(xs, "^\"|\"$")
+}
+
+str_detect_any <- function(xs, pattern) {
+    any(stringr::str_detect(xs, pattern))
+}

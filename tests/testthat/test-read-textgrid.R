@@ -9,3 +9,9 @@ test_that("reading in empty point tiers", {
   tg <- read_textgrid(path)
   expect_equal(nrow(tg), 3)
 })
+
+test_that("result is a tibble", {
+  path <- testthat::test_path("test-data/Mary_John_bell.TextGrid")
+  tg <- read_textgrid(path)
+  testthat::expect_s3_class(tg, "tbl")
+})
