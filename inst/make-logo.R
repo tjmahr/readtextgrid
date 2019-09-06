@@ -1,9 +1,8 @@
 # install.packages("hexSticker")
 library(hexSticker)
+library(ggplot2)
 
 # dir.create("man/figures")
-
-library(ggplot2)
 
 df <- tibble::tibble(
   row = 2,
@@ -36,6 +35,7 @@ blue <- "#4D85BD"
 
 grid_min <- -.143 / 2
 grid_max <- 1 + .143 / 2
+text_size <- 15
 
 p <- ggplot(df) +
   aes(x = x, y = row) +
@@ -61,7 +61,6 @@ p <- ggplot(df) +
     lineend = "round",
     color = blue
   ) +
-
   geom_ribbon(
     aes(x = x, ymax = ymax, ymin = ymin),
     data = tibble::tibble(
@@ -96,21 +95,32 @@ p <- ggplot(df) +
     lineend = "round",
     color = red
   ) +
-  geom_text(aes(label = label), size = 13, hjust = .5, color = text) +
-  geom_text(aes(label = label), data = df2[-6, ], size = 13, color = text) +
-  geom_text(aes(label = label), data = df2[6, ], size = 13, color = red) +
-  theme_void() + theme_transparent()
+  geom_text(aes(label = label), size = text_size, color = text) +
+  geom_text(
+    aes(label = label),
+    data = df2[-6, ],
+    size = text_size,
+    color = text
+  ) +
+  geom_text(
+    aes(label = label),
+    data = df2[6, ],
+    size = text_size,
+    color = red
+  ) +
+  theme_void() +
+  theme_transparent()
 
 sticker(
   p,
   package = "",
   s_x = 1,
   s_y = 1,
-  s_width = 1.45,
-  s_height = 1.23,
+  s_width = 1.65,
+  s_height = 1,
   filename = "man/figures/logo.png",
   h_fill = "white",
   h_color = red
 )
 
-# system2("open", "man/figures/logo.png")
+system2("open", "man/figures/logo.png")
