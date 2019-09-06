@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# readtextgrid
+# readtextgrid <img src="man/figures/logo.png" width = "150" align="right" />
 
 <!-- badges: start -->
 

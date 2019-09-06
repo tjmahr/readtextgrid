@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# readtextgrid
+# readtextgrid <img src="man/figures/logo.png" width = "150" align="right" />
 
 <!-- badges: start -->
 [![Travis build status](https://travis-ci.org/tjmahr/readtextgrid.svg?branch=master)](https://travis-ci.org/tjmahr/readtextgrid)
