@@ -31,12 +31,14 @@ remotes::install_github("tjmahr/readtextgrid")
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+Here is the example textgrid created by Praat.
 
 ```{r example}
 library(readtextgrid)
 
-# This textgrid as an empty PointTier
-tg <- system.file("Mary_John_bell.TextGrid", package = "readtextgrid")
+# Locates path to an example textgrid bundled with this package
+tg <- example_textgrid()
+
+# This textgrid has an empty point tier
 read_textgrid(tg)
 ```

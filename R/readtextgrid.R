@@ -37,6 +37,25 @@ read_textgrid_lines <- function(lines, file = NULL) {
     tibble::add_column(file = file, .before = 1)
 }
 
+
+#' Locate the path of the example textgrid file
+#'
+#' Locate the path of the example textgrid file
+#'
+#' @return Path of `"Mary_John_bell.TextGrid"` bundled with the `readtextgrid`
+#'   package.
+#'
+#' @details This function is a wrapper over [`system.file()`]  to locate the
+#' path to `"Mary_John_bell.TextGrid"`. This file is the default textgrid that
+#' is created by Praat.
+#'
+#' @export
+example_textgrid <- function() {
+  system.file("Mary_John_bell.TextGrid", package = "readtextgrid")
+}
+
+
+
 parse_textgrid_lines <- function(lines) {
   lines %>%
     slice_sections("item") %>%
