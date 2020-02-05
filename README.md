@@ -7,15 +7,24 @@
 
 [![Travis build
 status](https://travis-ci.org/tjmahr/readtextgrid.svg?branch=master)](https://travis-ci.org/tjmahr/readtextgrid)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/readtextgrid)](https://CRAN.R-project.org/package=readtextgrid)
 <!-- badges: end -->
 
 readtextgrid parses Praat textgrids into R dataframes.
 
 ## Installation
 
-You can install the GitHub version of readtextgrid with:
+Install from CRAN:
 
 ``` r
+install.packages("readtextgrid")
+```
+
+Install the development version from Github:
+
+``` r
+install.packages("remotes")
 remotes::install_github("tjmahr/readtextgrid")
 ```
 
