@@ -192,9 +192,11 @@ data
 #> # ... with 140 more rows
 ```
 
-Another strategy would be use a list columns.
+Another strategy would be to read the textgrid dataframes into a list
+column and `unnest()` them.
 
 ``` r
+# Read dataframes into a list column
 data_nested <- tibble(
   speaker = basename(dirname(paths)),
   data = map(paths, read_textgrid)
