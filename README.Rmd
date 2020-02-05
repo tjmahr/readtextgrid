@@ -77,14 +77,14 @@ The columns encode the following information:
   - `xmin`, `xmax` start and end times of the textgrid interval or point tier
     annotation in seconds
   - `text` the text in the annotation
-  - `annotation_num` the number of that annotation in that tier (1 for the first
+  - `annotation_num` the number of the annotation in that tier (1 for the first
     annotation, etc.)
 
 ## Reading in a directory of textgrids
 
-Suppose you have a folder of textgrids for each speaker. As an example, this
-package has a folder called `speaker_data` bundled with it representing 5 five
-textgrids from 2 speakers.
+Suppose you have data on multiple speakers with one folder of textgrids per
+speaker. As an example, this package has a folder called `speaker_data` bundled
+with it representing 5 five textgrids from 2 speakers.
 
 ```
 speaker-data
@@ -117,8 +117,8 @@ paths <- list.files(
 )
 ```
 
-We can use `purrr::map_dfr()` to read all this into R, but note that this way
-loses the speaker information.
+We can use `purrr::map_dfr()` to read all these textgrids into R, but note that
+this way loses the speaker information.
 
 ```{r, R.options = list(tibble.width = 100)}
 library(purrr)
@@ -132,7 +132,7 @@ speaker information.
 ```{r, R.options = list(tibble.width = 100), message = FALSE, warning = FALSE}
 library(dplyr)
 
-# This tells read_textgrid to set the file column to the full path
+# This tells read_textgrid() to set the file column to the full path
 data <- map2_dfr(paths, paths, read_textgrid) %>% 
   mutate(
     # basename() removes the folder part from a path, 
@@ -168,11 +168,13 @@ tidyr::unnest(data_nested, "data")
 
 ### Helpful columns
 
-These three columns are helpful: 
+The following columns are often helpful:
 
 - `duration` of an interval
 - `xmid` midpoint of an interval
 - `total_annotations` total number of annotations on a tier
+
+Here is how to create them:
 
 ```{r}
 data %>%
@@ -192,8 +194,9 @@ data %>%
 *This tip is written from the perspective of a Windows user who uses git bash
 for a terminal*. To open textgrids in Praat, you can tell R to call Praat from
 the command line. You have to know where the location of the Praat binary is
-though. I like to keep a copy in my project directories, so something like this
-would open 10 textgrids in Praat.
+though. I like to keep a copy in my project directories. So, assuming that
+Praat.exe in my working folder, the following would open the 10 textgrids in
+`paths` in Praat.
 
 ```{r, eval = FALSE}
 system2(
