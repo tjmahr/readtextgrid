@@ -8,3 +8,4 @@
 ^inst/draw-tg-parts.praat$
 ^inst/make-logo.R$
 ^inst/tg-parts.png$
+^\.github$

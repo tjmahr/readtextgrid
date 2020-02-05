@@ -307,3 +307,9 @@ with this package.
 readtextgrid was created to process data from the [WISC Lab
 project](https://kidspeech.wisc.edu/). Thus, development of this package
 was supported by NIH R01DC009411 and NIH R01DC015653.
+
+-----
+
+Please note that the ‘readtextgrid’ project is released with a
+[Contributor Code of Conduct](.github/CODE_OF_CONDUCT.md). By
+contributing to this project, you agree to abide by its terms.
