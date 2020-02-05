@@ -1,6 +1,6 @@
 Package: readtextgrid
 Type: Package
-Title: Read in a 'Praat' 'TextGrid' file
+Title: Read in a 'Praat' 'TextGrid' File
 Version: 0.1.0
 Authors@R: 
     person(given = "Tristan",
