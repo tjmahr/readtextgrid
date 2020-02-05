@@ -1,0 +1,324 @@
+File type = "ooTextFile"
+Object class = "Collection"
+
+size = 8 
+item []: 
+    item [1]:
+        class = "TextGrid" 
+        name = "Mary_John_bell" 
+        xmin = 0 
+        xmax = 1 
+        tiers? <exists> 
+        size = 3 
+        item []: 
+            item [1]:
+                class = "IntervalTier" 
+                name = "Mary" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "" 
+            item [2]:
+                class = "IntervalTier" 
+                name = "John" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "" 
+            item [3]:
+                class = "TextTier" 
+                name = "bell" 
+                xmin = 0 
+                xmax = 1 
+                points: size = 0 
+    item [2]:
+        class = "TextGrid" 
+        name = "blue-text" 
+        xmin = 0 
+        xmax = 1 
+        tiers? <exists> 
+        size = 3 
+        item []: 
+            item [1]:
+                class = "IntervalTier" 
+                name = "Mary" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "" 
+            item [2]:
+                class = "IntervalTier" 
+                name = "John" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 3 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 0.1850158439093439 
+                    text = "\s{0}" 
+                intervals [2]:
+                    xmin = 0.1850158439093439 
+                    xmax = 0.7817226699265979 
+                    text = "" 
+                intervals [3]:
+                    xmin = 0.7817226699265979 
+                    xmax = 1 
+                    text = "\s{1.000000}" 
+            item [3]:
+                class = "IntervalTier" 
+                name = "" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "" 
+    item [3]:
+        class = "TextGrid" 
+        name = "forehead-and-chin" 
+        xmin = 0 
+        xmax = 1 
+        tiers? <exists> 
+        size = 3 
+        item []: 
+            item [1]:
+                class = "IntervalTier" 
+                name = "Mary" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "\s{1.00000 (1.000 / s)}" 
+            item [2]:
+                class = "IntervalTier" 
+                name = "John" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "\s{Visible part 1.000000 seconds}" 
+            item [3]:
+                class = "IntervalTier" 
+                name = "" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "\s{Total duration 1.000000 seconds}" 
+    item [4]:
+        class = "TextGrid" 
+        name = "right-marginal-text" 
+        xmin = 0 
+        xmax = 1 
+        tiers? <exists> 
+        size = 3 
+        item []: 
+            item [1]:
+                class = "IntervalTier" 
+                name = "Mary" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "\s{Mary}
+\s{(1)}" 
+            item [2]:
+                class = "IntervalTier" 
+                name = "John" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "\s{John}
+\s{(1)}" 
+            item [3]:
+                class = "IntervalTier" 
+                name = "" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "\s{bell}
+\s{(0)}" 
+    item [5]:
+        class = "TextGrid" 
+        name = "left-marginal-text" 
+        xmin = 0 
+        xmax = 1 
+        tiers? <exists> 
+        size = 3 
+        item []: 
+            item [1]:
+                class = "IntervalTier" 
+                name = "Mary" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "1" 
+            item [2]:
+                class = "IntervalTier" 
+                name = "John" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "2" 
+            item [3]:
+                class = "IntervalTier" 
+                name = "" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "3" 
+    item [6]:
+        class = "TextGrid" 
+        name = "blue-text-mask" 
+        xmin = 0 
+        xmax = 1 
+        tiers? <exists> 
+        size = 3 
+        item []: 
+            item [1]:
+                class = "IntervalTier" 
+                name = "Mary" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "" 
+            item [2]:
+                class = "IntervalTier" 
+                name = "John" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 3 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 0.1850158439093439 
+                    text = "" 
+                intervals [2]:
+                    xmin = 0.1850158439093439 
+                    xmax = 0.7817226699265979 
+                    text = "" 
+                intervals [3]:
+                    xmin = 0.7817226699265979 
+                    xmax = 1 
+                    text = "" 
+            item [3]:
+                class = "IntervalTier" 
+                name = "" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "" 
+    item [7]:
+        class = "TextGrid" 
+        name = "left-marginal-text-mask" 
+        xmin = 0 
+        xmax = 1 
+        tiers? <exists> 
+        size = 3 
+        item []: 
+            item [1]:
+                class = "IntervalTier" 
+                name = "Mary" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "" 
+            item [2]:
+                class = "IntervalTier" 
+                name = "John" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "" 
+            item [3]:
+                class = "IntervalTier" 
+                name = "" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "" 
+    item [8]:
+        class = "TextGrid" 
+        name = "right-marginal-text-mask" 
+        xmin = 0 
+        xmax = 1 
+        tiers? <exists> 
+        size = 3 
+        item []: 
+            item [1]:
+                class = "IntervalTier" 
+                name = "Mary" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "" 
+            item [2]:
+                class = "IntervalTier" 
+                name = "John" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "" 
+            item [3]:
+                class = "IntervalTier" 
+                name = "" 
+                xmin = 0 
+                xmax = 1 
+                intervals: size = 1 
+                intervals [1]:
+                    xmin = 0 
+                    xmax = 1 
+                    text = "" 

@@ -29,16 +29,185 @@ You can install the GitHub version of readtextgrid with:
 remotes::install_github("tjmahr/readtextgrid")
 ```
 
-## Example
+## Basic example
 
-Here is the example textgrid created by Praat.
+Here is the example textgrid created by Praat. It was created using 
+`New -> Create TextGrid...` with default settings in Praat.
 
-```{r example}
+<img src="man/figures/demo-textgrid.png" width="600" /> 
+
+This textgrid is bundled with this R package. We can locate the file with
+`example_textgrid()`. We read in the textgrid with `read_textgrid()`.
+
+```{r example, R.options = list(tibble.width = 100)}
 library(readtextgrid)
 
 # Locates path to an example textgrid bundled with this package
 tg <- example_textgrid()
 
-# This textgrid has an empty point tier
-read_textgrid(tg)
+read_textgrid(path = tg)
 ```
+
+The dataframe contains one row per annotation: one row for each interval on an
+interval tier and one row for each point on a point tier. If a point tier has no
+points, it is represented with single row with `NA` values.
+
+The columns encode the following information:
+
+  - `file` filename of the textgrid. By default this column uses the filename in
+    `path`. A user can override this value by setting the `file` argument in
+    `read_textgrid(path, file)`, which can be useful if textgrids are stored in
+    speaker-specific folders.
+  - `tier_num` the number of the tier (as in the left margin of the textgrid
+    editor)
+  - `tier_name` the name of the tier (as in the right margin of the textgrid
+    editor)
+  - `tier_type` the type of the tier. `"IntervalTier"` for interval tiers and
+    `"TextTier"` for point tiers (this is the terminology used inside of the
+    textgrid file format).
+  - `tier_xmin`, `tier_xmax` start and end times of the tier in seconds
+  - `xmin`, `xmax` start and end times of the textgrid interval or point tier
+    annotation in seconds
+  - `text` the text in the annotation
+  - `annotation_num` the number of that annotation in that tier (1 for the first
+    annotation, etc.)
+
+## Reading in a directory of textgrids
+
+Suppose you have a folder of textgrids for each speaker. As an example, this
+package has a folder called `speaker_data` bundled with it representing 5 five
+textgrids from 2 speakers.
+
+```
+speaker-data
++-- speaker001
+|   +-- s2T01.TextGrid
+|   +-- s2T02.TextGrid
+|   +-- s2T03.TextGrid
+|   +-- s2T04.TextGrid
+|   \-- s2T05.TextGrid
+\-- speaker002
+    +-- s2T01.TextGrid
+    +-- s2T02.TextGrid
+    +-- s2T03.TextGrid
+    +-- s2T04.TextGrid
+    \-- s2T05.TextGrid
+```
+
+First, we create a set of paths to read into R.
+
+```{r}
+# Get the path of the folder bundled with the package
+data_dir <- system.file(package = "readtextgrid", "speaker-data")
+
+# Get the full paths to all the textgrids
+paths <- list.files(
+  path = data_dir, 
+  pattern = "TextGrid$",
+  full.names = TRUE, 
+  recursive = TRUE
+)
+```
+
+We can use `purrr::map_dfr()` to read all this into R, but note that this way
+loses the speaker information.
+
+```{r, R.options = list(tibble.width = 100)}
+library(purrr)
+
+map_dfr(paths, read_textgrid)
+```
+
+We can use `purrr::map2_dfr()` and some dataframe manipulation to add the
+speaker information.
+
+```{r, R.options = list(tibble.width = 100), message = FALSE, warning = FALSE}
+library(dplyr)
+
+# This tells read_textgrid to set the file column to the full path
+data <- map2_dfr(paths, paths, read_textgrid) %>% 
+  mutate(
+    # basename() removes the folder part from a path, 
+    # dirname() removes the file part from a path
+    speaker = basename(dirname(file)),
+    file = basename(file),
+  ) %>% 
+  select(
+    speaker, everything()
+  )
+
+data
+```
+
+Another strategy would be use a list columns.
+
+```{r}
+data_nested <- tibble(
+  speaker = basename(dirname(paths)),
+  data = map(paths, read_textgrid)
+)
+data_nested
+
+tidyr::unnest(data_nested, "data")
+```
+
+
+
+
+## Other tips
+
+### Helpful columns
+
+These three columns are helpful: 
+
+- `duration` of an interval
+- `xmid` midpoint of an interval
+- `total_annotations` total number of annotations on a tier
+
+```{r}
+data %>%
+  # grouping needed for counting annotations per tier per file per speaker
+  group_by(speaker, file, tier_num) %>%
+  mutate(
+    duration = xmax - xmin,
+    xmid = xmin + (xmax - xmin) / 2,
+    total_annotations = sum(!is.na(annotation_num))
+  ) %>% 
+  ungroup() %>% 
+  glimpse()
+```
+
+### Launching Praat
+
+*This tip is written from the perspective of a Windows user who uses git bash
+for a terminal*. To open textgrids in Praat, you can tell R to call Praat from
+the command line. You have to know where the location of the Praat binary is
+though. I like to keep a copy in my project directories, so something like this
+would open 10 textgrids in Praat.
+
+```{r, eval = FALSE}
+system2(
+  command = "./Praat.exe",
+  args = c("--open", paths),
+  wait = FALSE
+)
+```
+
+
+## Limitations
+
+readtextgrid supports textgrids created by Praat by using `Save as text
+file...`. It uses a parsing strategy based on regular expressions targeting
+indentation patterns and text flags in the file format. The [formal
+specification of the textgrid
+format](http://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html),
+however, is much more flexible. As a result, not every textgrid that Praat can
+open---especially the minimal "short text" files---is compatible with this
+package.
+
+## Acknowledgments
+
+readtextgrid was created to process data from the [WISC Lab
+project](https://kidspeech.wisc.edu/). Thus, development of this package was
+supported by NIH R01DC009411 and NIH R01DC015653.
+
