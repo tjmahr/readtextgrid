@@ -15,3 +15,9 @@ test_that("result is a tibble", {
   tg <- read_textgrid(path)
   testthat::expect_s3_class(tg, "tbl")
 })
+
+test_that("example_textgrid works", {
+  path <- example_textgrid()
+  tg <- read_textgrid(path)
+  expect_equal(nrow(tg), 3)
+})
