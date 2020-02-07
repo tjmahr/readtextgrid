@@ -84,7 +84,7 @@ The columns encode the following information:
   - `annotation_num` the number of the annotation in that tier (1 for
     the first annotation, etc.)
 
-## Reading in a directory of textgrids
+## Reading in directories of textgrids
 
 Suppose you have data on multiple speakers with one folder of textgrids
 per speaker. As an example, this package has a folder called
@@ -105,7 +105,7 @@ speakers.
         +-- s2T04.TextGrid
         \-- s2T05.TextGrid
 
-First, we create a set of paths to read into R.
+First, we create a vector of file-paths to read into R.
 
 ``` r
 # Get the path of the folder bundled with the package
@@ -120,8 +120,9 @@ paths <- list.files(
 )
 ```
 
-We can use `purrr::map_dfr()` to read all these textgrids into R, but
-note that this way loses the speaker information.
+We can use `purrr::map_dfr()`–*map* the `read_textgrid` function over
+the `paths` and combine the dataframes (`_dfr`)—to read all these
+textgrids into R. But note that this way loses the speaker information.
 
 ``` r
 library(purrr)
@@ -211,6 +212,8 @@ data_nested <- tibble(
   speaker = basename(dirname(paths)),
   data = map(paths, read_textgrid)
 )
+
+# We have one row per textgrid dataframe because `data` is a list column
 data_nested
 #> # A tibble: 10 x 2
 #>    speaker    data              
@@ -226,6 +229,7 @@ data_nested
 #>  9 speaker002 <tibble [12 x 10]>
 #> 10 speaker002 <tibble [19 x 10]>
 
+# promote the nested dataframes into the main dataframe
 tidyr::unnest(data_nested, "data")
 #> # A tibble: 150 x 11
 #>    speaker file  tier_num tier_name tier_type tier_xmin tier_xmax  xmin  xmax
@@ -245,6 +249,27 @@ tidyr::unnest(data_nested, "data")
 ```
 
 ## Other tips
+
+### Speeding things up
+
+Do you have thousands of textgrids to read? The following workflow can
+speed things up. We are going to read the textgrids in parallel. We use
+the future package to manage the parallel computation. We use the furrr
+package to get future-friendly versions of the purrr functions. We tell
+future to use a `multisession` `plan` for parallelism: Do the extra
+computation on separate R sessions in the background. Then everything
+else is the same. Just replace `map()` with `future_map()`.
+
+``` r
+library(future)
+library(furrr)
+plan(multisession)
+
+data_nested <- tibble(
+  speaker = basename(dirname(paths)),
+  data = future_map(paths, read_textgrid)
+)
+```
 
 ### Helpful columns
 
@@ -288,11 +313,13 @@ data %>%
 ### Launching Praat
 
 *This tip is written from the perspective of a Windows user who uses git
-bash for a terminal*. To open textgrids in Praat, you can tell R to call
-Praat from the command line. You have to know where the location of the
-Praat binary is though. I like to keep a copy in my project directories.
-So, assuming that Praat.exe in my working folder, the following would
-open the 10 textgrids in `paths` in Praat.
+bash for a terminal*.
+
+To open textgrids in Praat, you can tell R to call Praat from the
+command line. You have to know where the location of the Praat binary is
+though. I like to keep a copy in my project directories. So, assuming
+that Praat.exe in my working folder, the following would open the 10
+textgrids in `paths` in Praat.
 
 ``` r
 system2(
