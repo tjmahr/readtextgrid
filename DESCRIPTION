@@ -1,7 +1,7 @@
 Package: readtextgrid
 Type: Package
 Title: Read in a 'Praat' 'TextGrid' File
-Version: 0.1.1
+Version: 0.1.1.9000
 Authors@R: 
     person(given = "Tristan",
            family = "Mahr",
@@ -15,11 +15,11 @@ Description: 'Praat' is a widely used tool for manipulating, annotating and
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
+Depends: R (>= 4.1.0)
 Suggests: 
     testthat (>= 2.1.0)
 RoxygenNote: 7.2.3
 Imports: 
-    magrittr,
     stats,
     utils,
     tibble,

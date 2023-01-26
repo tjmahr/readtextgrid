@@ -17,8 +17,8 @@ read_textgrid <- function(path, file = NULL) {
     file <- basename(path)
   }
 
-  path %>%
-    readr::read_lines() %>%
+  path |>
+    readr::read_lines() |>
     read_textgrid_lines(file = file)
 }
 
@@ -31,9 +31,9 @@ read_textgrid_lines <- function(lines, file = NULL) {
 
   stopifnot(str_detect_any(lines, "ooTextFile"))
 
-  lines %>%
-    parse_textgrid_lines() %>%
-    tibble::as_tibble() %>%
+  lines |>
+    parse_textgrid_lines() |>
+    tibble::as_tibble() |>
     tibble::add_column(file = file, .before = 1)
 }
 
@@ -57,9 +57,9 @@ example_textgrid <- function() {
 
 
 parse_textgrid_lines <- function(lines) {
-  lines %>%
-    slice_sections("item") %>%
-    purrr::map(parse_item_lines) %>%
+  lines |>
+    slice_sections("item") |>
+    purrr::map(parse_item_lines) |>
     plyr::ldply(as.data.frame, stringsAsFactors = FALSE)
 }
 
@@ -72,8 +72,8 @@ slice_sections <- function(lines, section_head) {
 
 
 parse_item_lines <- function(lines_items) {
-  item_num <- lines_items[1] %>%
-    stringr::str_extract("\\d+") %>%
+  item_num <- lines_items[1] |>
+    stringr::str_extract("\\d+") |>
     as.numeric()
 
   tier_type <- get_field(lines_items, "class")
@@ -104,10 +104,10 @@ parse_item_lines <- function(lines_items) {
 }
 
 parse_interval_tier <- function(lines_interval_tier) {
-  lines_interval_tier %>%
-    slice_sections("intervals") %>%
-    purrr::map(get_field_list, fields = c("xmin", "xmax", "text")) %>%
-    purrr::imap(add_annotation_num) %>%
+  lines_interval_tier |>
+    slice_sections("intervals") |>
+    purrr::map(get_field_list, fields = c("xmin", "xmax", "text")) |>
+    purrr::imap(add_annotation_num) |>
     plyr::ldply(as.data.frame, stringsAsFactors = FALSE)
 }
 
@@ -115,10 +115,10 @@ parse_point_tier <- function(lines_point_tier) {
   no_points <- str_detect_any(lines_point_tier, "points: size = 0")
 
   if (!no_points) {
-    df <- lines_point_tier %>%
-      slice_sections("points") %>%
-      purrr::map(get_field_list, fields = c("number", "mark")) %>%
-      purrr::imap(add_annotation_num) %>%
+    df <- lines_point_tier |>
+      slice_sections("points") |>
+      purrr::map(get_field_list, fields = c("number", "mark")) |>
+      purrr::imap(add_annotation_num) |>
       plyr::ldply(as.data.frame, stringsAsFactors = FALSE)
 
     # We treat points as zero-width intervals
@@ -157,11 +157,11 @@ get_field_list <- function(lines, fields) {
 get_field <- function(lines, field) {
   re <- paste0("(?<=", field, " = ).+")
 
-  lines %>%
-    stringr::str_extract(re) %>%
-    remove_na() %>%
-    utils::head(1) %>%
-    stringr::str_trim() %>%
+  lines |>
+    stringr::str_extract(re) |>
+    remove_na() |>
+    utils::head(1) |>
+    stringr::str_trim() |>
     str_unquote()
 }
 

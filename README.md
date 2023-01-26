@@ -162,13 +162,13 @@ the speaker information.
 library(dplyr)
 
 # This tells read_textgrid() to set the file column to the full path
-data <- map2_dfr(paths, paths, read_textgrid) %>% 
+data <- map2_dfr(paths, paths, read_textgrid) |> 
   mutate(
     # basename() removes the folder part from a path, 
     # dirname() removes the file part from a path
     speaker = basename(dirname(file)),
     file = basename(file),
-  ) %>% 
+  ) |> 
   select(
     speaker, everything()
   )
@@ -281,15 +281,15 @@ The following columns are often helpful:
 Here is how to create them:
 
 ``` r
-data %>%
+data |>
   # grouping needed for counting annotations per tier per file per speaker
-  group_by(speaker, file, tier_num) %>%
+  group_by(speaker, file, tier_num) |>
   mutate(
     duration = xmax - xmin,
     xmid = xmin + (xmax - xmin) / 2,
     total_annotations = sum(!is.na(annotation_num))
-  ) %>% 
-  ungroup() %>% 
+  ) |> 
+  ungroup() |> 
   glimpse()
 #> Rows: 150
 #> Columns: 14
