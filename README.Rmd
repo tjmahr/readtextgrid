@@ -16,8 +16,8 @@ knitr::opts_chunk$set(
 # readtextgrid <img src="man/figures/logo.png" width = "150" align="right" />
 
 <!-- badges: start -->
-[![Travis build status](https://travis-ci.org/tjmahr/readtextgrid.svg?branch=master)](https://travis-ci.org/tjmahr/readtextgrid)
 [![CRAN status](https://www.r-pkg.org/badges/version/readtextgrid)](https://CRAN.R-project.org/package=readtextgrid)
+[![R-CMD-check](https://github.com/tjmahr/readtextgrid/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tjmahr/readtextgrid/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 readtextgrid parses Praat textgrids into R dataframes.
