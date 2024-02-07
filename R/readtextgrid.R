@@ -18,7 +18,7 @@ read_textgrid <- function(path, file = NULL, encoding = NULL) {
   }
 
   if (is.null(encoding)) {
-    encoding <- readr::guess_encoding(file)$encoding[1]
+    encoding <- readr::guess_encoding(path)$encoding[1]
     file_locale <- readr::locale(encoding=encoding)
   }
 
