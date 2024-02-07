@@ -12,13 +12,18 @@
 #' @examples
 #' tg <- system.file("Mary_John_bell.TextGrid", package = "readtextgrid")
 #' read_textgrid(tg)
-read_textgrid <- function(path, file = NULL) {
+read_textgrid <- function(path, file = NULL, encoding = NULL) {
   if (is.null(file)) {
     file <- basename(path)
   }
 
+  if (is.null(encoding)) {
+    encoding <- readr::guess_encoding(file)$encoding[1]
+    file_locale <- readr::locale(encoding=encoding)
+  }
+
   path |>
-    readr::read_lines() |>
+    readr::read_lines(locale=file_locale) |>
     read_textgrid_lines(file = file)
 }
 
