@@ -1,15 +1,9 @@
-## Resubmission
-This is a resubmission. In this version I have:
+Removed LazyData from field from DESCRIPTION to silence the 
+`'LazyData' is specified without a 'data' directory` note.
 
-* Fixed the NOTE about the "(possibly) invalid file URI" in README.md
+Tested on the default GitHub actions environments:
 
-## Test environments
-* local windows install (R 3.6.1)
-* ubuntu 16.04 on travis-ci (R 3.6.2, devel)
-* windows on rhub (devel)
+- Devel, Release, Old Release on Ubuntu
+- Release on macOS
+- Release on Windows
 
-## R CMD check results
-
-0 errors | 0 warnings | 1 note
-
-* This is a new release.

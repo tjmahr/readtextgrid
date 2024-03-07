@@ -15,7 +15,6 @@ Description: 'Praat' <https://www.fon.hum.uva.nl/praat/> is a widely
     files into R.
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
 Depends: R (>= 4.1.0)
 Suggests: 
     testthat (>= 2.1.0)
