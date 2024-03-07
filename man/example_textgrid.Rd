@@ -2,19 +2,30 @@
 % Please edit documentation in R/readtextgrid.R
 \name{example_textgrid}
 \alias{example_textgrid}
-\title{Locate the path of the example textgrid file}
+\title{Locate the path of an example textgrid file}
 \usage{
-example_textgrid()
+example_textgrid(which = 1)
+}
+\arguments{
+\item{which}{index of the textgrid to load}
 }
 \value{
 Path of \code{"Mary_John_bell.TextGrid"} bundled with the \code{readtextgrid}
 package.
 }
 \description{
-Locate the path of the example textgrid file
+Locate the path of an example textgrid file
 }
 \details{
 This function is a wrapper over \code{\link[=system.file]{system.file()}}  to locate the
-path to \code{"Mary_John_bell.TextGrid"}. This file is the default textgrid that
-is created by Praat.
+paths to bundled textgrids. These files are used to test or demonstrate
+functionality of the package.
+
+Two files are included:
+\enumerate{
+\item \code{"Mary_John_bell.TextGrid"} - the default TextGrid created by Praat's
+Create TextGrid command. This file is saved as UTF-8 encoding.
+\item \code{"utf_16_be.TextGrid"} - a TextGrid with some IPA characters entered using
+Praat's IPA character selector. This file is saved with UTF-16 encoding.
+}
 }
