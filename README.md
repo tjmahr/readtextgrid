@@ -152,7 +152,7 @@ map_dfr(paths, read_textgrid)
 #>  8 0.522 "D"                  4
 #>  9 0.621 "HH"                 5
 #> 10 0.783 "AW1"                6
-#> # … with 140 more rows
+#> # ℹ 140 more rows
 ```
 
 We can use `purrr::map2_dfr()` and some dataframe manipulation to add
@@ -199,7 +199,7 @@ data
 #>  8 0.495 0.522 "D"                  4
 #>  9 0.522 0.621 "HH"                 5
 #> 10 0.621 0.783 "AW1"                6
-#> # … with 140 more rows
+#> # ℹ 140 more rows
 ```
 
 Another strategy would be to read the textgrid dataframes into a list
@@ -231,20 +231,20 @@ data_nested
 # promote the nested dataframes into the main dataframe
 tidyr::unnest(data_nested, "data")
 #> # A tibble: 150 × 11
-#>    speaker    file     tier_…¹ tier_…² tier_…³ tier_…⁴ tier_…⁵  xmin  xmax text 
-#>    <chr>      <chr>      <dbl> <chr>   <chr>     <dbl>   <dbl> <dbl> <dbl> <chr>
-#>  1 speaker001 s2T01.T…       1 words   Interv…       0    1.35 0     0.297 ""   
-#>  2 speaker001 s2T01.T…       1 words   Interv…       0    1.35 0.297 0.522 "bir…
-#>  3 speaker001 s2T01.T…       1 words   Interv…       0    1.35 0.522 0.972 "hou…
-#>  4 speaker001 s2T01.T…       1 words   Interv…       0    1.35 0.972 1.35  ""   
-#>  5 speaker001 s2T01.T…       2 phones  Interv…       0    1.35 0     0.297 "sil"
-#>  6 speaker001 s2T01.T…       2 phones  Interv…       0    1.35 0.297 0.36  "B"  
-#>  7 speaker001 s2T01.T…       2 phones  Interv…       0    1.35 0.36  0.495 "ER1"
-#>  8 speaker001 s2T01.T…       2 phones  Interv…       0    1.35 0.495 0.522 "D"  
-#>  9 speaker001 s2T01.T…       2 phones  Interv…       0    1.35 0.522 0.621 "HH" 
-#> 10 speaker001 s2T01.T…       2 phones  Interv…       0    1.35 0.621 0.783 "AW1"
-#> # … with 140 more rows, 1 more variable: annotation_num <int>, and abbreviated
-#> #   variable names ¹​tier_num, ²​tier_name, ³​tier_type, ⁴​tier_xmin, ⁵​tier_xmax
+#>    speaker    file  tier_num tier_name tier_type tier_xmin tier_xmax  xmin  xmax
+#>    <chr>      <chr>    <dbl> <chr>     <chr>         <dbl>     <dbl> <dbl> <dbl>
+#>  1 speaker001 s2T0…        1 words     Interval…         0      1.35 0     0.297
+#>  2 speaker001 s2T0…        1 words     Interval…         0      1.35 0.297 0.522
+#>  3 speaker001 s2T0…        1 words     Interval…         0      1.35 0.522 0.972
+#>  4 speaker001 s2T0…        1 words     Interval…         0      1.35 0.972 1.35 
+#>  5 speaker001 s2T0…        2 phones    Interval…         0      1.35 0     0.297
+#>  6 speaker001 s2T0…        2 phones    Interval…         0      1.35 0.297 0.36 
+#>  7 speaker001 s2T0…        2 phones    Interval…         0      1.35 0.36  0.495
+#>  8 speaker001 s2T0…        2 phones    Interval…         0      1.35 0.495 0.522
+#>  9 speaker001 s2T0…        2 phones    Interval…         0      1.35 0.522 0.621
+#> 10 speaker001 s2T0…        2 phones    Interval…         0      1.35 0.621 0.783
+#> # ℹ 140 more rows
+#> # ℹ 2 more variables: text <chr>, annotation_num <int>
 ```
 
 ## Other tips
