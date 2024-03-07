@@ -2,8 +2,12 @@
 #' Read a textgrid file into a tibble
 #'
 #' @rdname read_textgrid
-#' @param path a path to a dataframe
+#' @param path a path to a textgrid
 #' @param lines alternatively, the lines of a textgrid file
+#' @param encoding the encoding of the textgrid. The default value `NULL` uses
+#'   [readr::guess_encoding()] to guess the encoding of the textgrid. If an
+#'   encoding is provided, it is forwarded to `[readr::locale()]` and
+#'   `[readr::read_lines()]`.
 #' @param file an optional value to use for the `file` column. For
 #'   `read_textgrid()`, the default is the base filename of the input file. For
 #'   `read_textgrid_lines()`, the default is `NA`.
@@ -19,11 +23,11 @@ read_textgrid <- function(path, file = NULL, encoding = NULL) {
 
   if (is.null(encoding)) {
     encoding <- readr::guess_encoding(path)$encoding[1]
-    file_locale <- readr::locale(encoding=encoding)
   }
+  file_locale <- readr::locale(encoding = encoding)
 
   path |>
-    readr::read_lines(locale=file_locale) |>
+    readr::read_lines(locale = file_locale) |>
     read_textgrid_lines(file = file)
 }
 
@@ -43,23 +47,30 @@ read_textgrid_lines <- function(lines, file = NULL) {
 }
 
 
-#' Locate the path of the example textgrid file
+#' Locate the path of an example textgrid file
 #'
-#' Locate the path of the example textgrid file
+#' Locate the path of an example textgrid file
 #'
+#' @param which index of the textgrid to load
 #' @return Path of `"Mary_John_bell.TextGrid"` bundled with the `readtextgrid`
 #'   package.
 #'
 #' @details This function is a wrapper over [`system.file()`]  to locate the
-#' path to `"Mary_John_bell.TextGrid"`. This file is the default textgrid that
-#' is created by Praat.
+#' paths to bundled textgrids. These files are used to test or demonstrate
+#' functionality of the package.
+#'
+#' Two files are included:
+#'
+#' 1. `"Mary_John_bell.TextGrid"` - the default TextGrid created by Praat's
+#'    Create TextGrid command. This file is saved as UTF-8 encoding.
+#' 2. `"utf_16_be.TextGrid"` - a TextGrid with some IPA characters entered using
+#'    Praat's IPA character selector. This file is saved with UTF-16 encoding.
 #'
 #' @export
-example_textgrid <- function() {
-  system.file("Mary_John_bell.TextGrid", package = "readtextgrid")
+example_textgrid <- function(which = 1) {
+  basename <- c("Mary_John_bell.TextGrid", "utf_16_be.TextGrid")[which]
+  system.file(basename, package = "readtextgrid")
 }
-
-
 
 parse_textgrid_lines <- function(lines) {
   lines |>
@@ -74,7 +85,6 @@ slice_sections <- function(lines, section_head) {
   ends <- c(starts[-1] - 1, length(lines))
   purrr::map2(starts, ends, function(x, y) lines[seq(x, y, by = 1)])
 }
-
 
 parse_item_lines <- function(lines_items) {
   item_num <- lines_items[1] |>

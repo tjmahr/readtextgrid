@@ -1,6 +1,8 @@
 # readtextgrid dev version
 
-* Remove magrittr dependency. (#5)
+* Add `encoding` argument to `read_textgrid()`. (#7, #8, #9, @jonorthwash)
+* Include example UTF-16 textgrid for testing.
+* Remove magrittr dependency. (#5, @JoFrhwld)
 
 
 # readtextgrid 0.1.1

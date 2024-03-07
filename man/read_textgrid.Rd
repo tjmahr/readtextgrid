@@ -5,16 +5,21 @@
 \alias{read_textgrid_lines}
 \title{Read a textgrid file into a tibble}
 \usage{
-read_textgrid(path, file = NULL)
+read_textgrid(path, file = NULL, encoding = NULL)
 
 read_textgrid_lines(lines, file = NULL)
 }
 \arguments{
-\item{path}{a path to a dataframe}
+\item{path}{a path to a textgrid}
 
 \item{file}{an optional value to use for the \code{file} column. For
 \code{read_textgrid()}, the default is the base filename of the input file. For
 \code{read_textgrid_lines()}, the default is \code{NA}.}
+
+\item{encoding}{the encoding of the textgrid. The default value \code{NULL} uses
+\code{\link[readr:encoding]{readr::guess_encoding()}} to guess the encoding of the textgrid. If an
+encoding is provided, it is forwarded to \verb{[readr::locale()]} and
+\verb{[readr::read_lines()]}.}
 
 \item{lines}{alternatively, the lines of a textgrid file}
 }
