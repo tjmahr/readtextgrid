@@ -171,7 +171,7 @@ tidyr::unnest(data_nested, "data")
 ### Speeding things up
 
 Do you have thousands of textgrids to read? The following workflow can speed
-things up. We are going to read the textgrids in parallel. We use the future
+things up. We are going to **read the textgrids in parallel**. We use the future
 package to manage the parallel computation. We use the furrr package to get
 future-friendly versions of the purrr functions. We tell future to use a
 `multisession` `plan` for parallelism: Do the extra computation on separate R
@@ -181,13 +181,35 @@ sessions in the background. Then everything else is the same. Just replace
 ```{r, warning = FALSE}
 library(future)
 library(furrr)
-plan(multisession)
+plan(multisession, workers = 4)
 
 data_nested <- tibble(
   speaker = basename(dirname(paths)),
   data = future_map(paths, read_textgrid)
 )
 ```
+
+By default, readtextgrid uses `readr::guess_encoding()` to determine the
+encoding of the textgrid before reading it in. But if you know the encoding
+beforehand, you can skip this guessing. In my limited testing, I found 
+that **setting the encoding** could reduce benchmark times by 3--4% compared 
+to guessing the encoding.
+
+Here, we read 100 textgrids using different approaches to benchmark the 
+results.
+
+```{r}
+paths_bench <- sample(paths, 100, replace = TRUE)
+bench::mark(
+  lapply_guess = lapply(paths_bench, read_textgrid),
+  lapply_set = lapply(paths_bench, read_textgrid, encoding = "UTF-8"),
+  future_guess = future_map(paths_bench, read_textgrid),
+  future_set = future_map(paths_bench, read_textgrid, encoding = "UTF-8"), 
+  min_iterations = 5,
+  check = TRUE
+)
+```
+
 
 ### Helpful columns
 

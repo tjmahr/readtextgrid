@@ -252,22 +252,52 @@ tidyr::unnest(data_nested, "data")
 ### Speeding things up
 
 Do you have thousands of textgrids to read? The following workflow can
-speed things up. We are going to read the textgrids in parallel. We use
-the future package to manage the parallel computation. We use the furrr
-package to get future-friendly versions of the purrr functions. We tell
-future to use a `multisession` `plan` for parallelism: Do the extra
+speed things up. We are going to **read the textgrids in parallel**. We
+use the future package to manage the parallel computation. We use the
+furrr package to get future-friendly versions of the purrr functions. We
+tell future to use a `multisession` `plan` for parallelism: Do the extra
 computation on separate R sessions in the background. Then everything
 else is the same. Just replace `map()` with `future_map()`.
 
 ``` r
 library(future)
 library(furrr)
-plan(multisession)
+plan(multisession, workers = 4)
 
 data_nested <- tibble(
   speaker = basename(dirname(paths)),
   data = future_map(paths, read_textgrid)
 )
+```
+
+By default, readtextgrid uses `readr::guess_encoding()` to determine the
+encoding of the textgrid before reading it in. But if you know the
+encoding beforehand, you can skip this guessing. In my limited testing,
+I found that **setting the encoding** could reduce benchmark times by
+3–4% compared to guessing the encoding.
+
+Here, we read 100 textgrids using different approaches to benchmark the
+results.
+
+``` r
+paths_bench <- sample(paths, 100, replace = TRUE)
+bench::mark(
+  lapply_guess = lapply(paths_bench, read_textgrid),
+  lapply_set = lapply(paths_bench, read_textgrid, encoding = "UTF-8"),
+  future_guess = future_map(paths_bench, read_textgrid),
+  future_set = future_map(paths_bench, read_textgrid, encoding = "UTF-8"), 
+  min_iterations = 5,
+  check = TRUE
+)
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
+#> # A tibble: 4 × 6
+#>   expression        min   median `itr/sec` mem_alloc `gc/sec`
+#>   <bch:expr>   <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
+#> 1 lapply_guess    3.73s    3.94s     0.250  185.33MB     1.80
+#> 2 lapply_set      3.68s    3.72s     0.266  177.45MB     1.54
+#> 3 future_guess    1.34s    1.37s     0.734    5.14MB     0   
+#> 4 future_set      1.21s    1.22s     0.814    5.14MB     0
 ```
 
 ### Helpful columns
