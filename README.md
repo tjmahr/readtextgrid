@@ -294,10 +294,10 @@ bench::mark(
 #> # A tibble: 4 × 6
 #>   expression        min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr>   <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 lapply_guess    3.73s    3.94s     0.250  185.33MB     1.80
-#> 2 lapply_set      3.68s    3.72s     0.266  177.45MB     1.54
-#> 3 future_guess    1.34s    1.37s     0.734    5.14MB     0   
-#> 4 future_set      1.21s    1.22s     0.814    5.14MB     0
+#> 1 lapply_guess    3.61s    3.67s     0.262  183.89MB     1.89
+#> 2 lapply_set      3.52s    3.54s     0.278  176.01MB     1.61
+#> 3 future_guess    1.33s    1.36s     0.732    5.14MB     0   
+#> 4 future_set      1.24s    1.27s     0.783    5.14MB     0
 ```
 
 ### Helpful columns
@@ -364,7 +364,7 @@ readtextgrid supports textgrids created by Praat by using
 `Save as text file...`. It uses a parsing strategy based on regular
 expressions targeting indentation patterns and text flags in the file
 format. The [formal specification of the textgrid
-format](http://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html),
+format](https://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html),
 however, is much more flexible. As a result, not every textgrid that
 Praat can open—especially the minimal “short text” files—is compatible
 with this package.

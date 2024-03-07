@@ -261,7 +261,7 @@ readtextgrid supports textgrids created by Praat by using `Save as text
 file...`. It uses a parsing strategy based on regular expressions targeting
 indentation patterns and text flags in the file format. The [formal
 specification of the textgrid
-format](http://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html),
+format](https://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html),
 however, is much more flexible. As a result, not every textgrid that Praat can
 open---especially the minimal "short text" files---is compatible with this
 package.
