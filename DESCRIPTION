@@ -1,16 +1,17 @@
 Package: readtextgrid
 Type: Package
 Title: Read in a 'Praat' 'TextGrid' File
-Version: 0.1.1.9000
+Version: 0.1.2
 Authors@R: 
     person(given = "Tristan",
            family = "Mahr",
            role = c("aut", "cre"),
            email = "tristan.mahr@wisc.edu",
            comment = c(ORCID = "0000-0002-8890-5116"))
-Description: 'Praat' is a widely used tool for manipulating, annotating and 
-    analyzing speech and acoustic data. It stores annotation data in a 
-    format called a 'TextGrid'. This package provides a way to read these 
+Description: 'Praat' <https://www.fon.hum.uva.nl/praat/> is a widely 
+    used tool for manipulating, annotating and analyzing speech and 
+    acoustic data. It stores annotation data in a format called a 
+    'TextGrid'. This package provides a way to read these 
     files into R.
 License: GPL-3
 Encoding: UTF-8
