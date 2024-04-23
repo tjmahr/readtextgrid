@@ -80,7 +80,7 @@ parse_textgrid_lines <- function(lines) {
 }
 
 slice_sections <- function(lines, section_head) {
-  re <- sprintf("^\\s+%s \\[\\d+\\]:", section_head)
+  re <- sprintf("^\\s+%s ?\\[\\d+\\]:?", section_head)
   starts <- stringr::str_which(lines, re)
   ends <- c(starts[-1] - 1, length(lines))
   purrr::map2(starts, ends, function(x, y) lines[seq(x, y, by = 1)])
