@@ -43,3 +43,13 @@ test_that("encoding support", {
     nrow() |>
     expect_equal(3)
 })
+
+
+test_that("reading in ELAN-generated textgrids (#11)", {
+  path <- testthat::test_path("test-data/elan.TextGrid")
+
+  path |>
+    read_textgrid() |>
+    nrow() |>
+    expect_equal(5)
+})
