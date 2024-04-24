@@ -1,6 +1,6 @@
 # readtextgrid dev version
 
-Nothing yet.
+* Support ELAN-generated textgrids (#11, @djvill)
 
 
 # readtextgrid 0.1.2
