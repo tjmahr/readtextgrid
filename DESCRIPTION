@@ -26,7 +26,9 @@ Imports:
     purrr,
     readr,
     stringr,
-    plyr
+    plyr,
+    dplyr,
+    rlang
 URL: https://github.com/tjmahr/readtextgrid
 BugReports: https://github.com/tjmahr/readtextgrid/issues
 Roxygen: list(markdown = TRUE)

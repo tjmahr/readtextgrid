@@ -44,7 +44,6 @@ test_that("encoding support", {
     expect_equal(3)
 })
 
-
 test_that("reading in ELAN-generated textgrids (#11)", {
   path <- testthat::test_path("test-data/elan.TextGrid")
 
@@ -52,4 +51,51 @@ test_that("reading in ELAN-generated textgrids (#11)", {
     read_textgrid() |>
     nrow() |>
     expect_equal(5)
+})
+
+test_that("pivoting words on a single tier", {
+  path <- testthat::test_path("test-data/nested-intervals.TextGrid")
+
+  data <- path |>
+    read_textgrid()
+
+  p1 <- data |> pivot_textgrid_tiers("utterance")
+  expect_equal(p1$utterance, "hug daddy")
+
+  p1 |>
+    hasName(c("utterance_xmin", "utterance_xmid", "utterance_xmax")) |>
+    all() |>
+    expect_true()
+
+  data |>
+    pivot_textgrid_tiers("fake name") |>
+    expect_error("must be used")
+})
+
+test_that("pivoting works with multiple tiers", {
+  path <- testthat::test_path("test-data/nested-intervals.TextGrid")
+  phones <- c("sil", "HH", "AH1", "G", "sp", "D", "AE1", "D", "IY0", "sp", "")
+  words <- rep(c("", "hug", "", "daddy", ""), c(1, 3, 1, 4, 2))
+
+  data <- path |>
+    read_textgrid()
+
+  p2 <- data |> pivot_textgrid_tiers(c("words", "phones"))
+
+  p2$words |>
+    expect_equal(words)
+
+  p2$phones |>
+    expect_equal(phones)
+
+  p2 |>
+    hasName(c("words_xmin", "words_xmid", "words_xmax")) |>
+    all() |>
+    expect_true()
+
+  p2 |>
+    hasName(c("phones_xmin", "phones_xmid", "phones_xmax")) |>
+    all() |>
+    expect_true()
+
 })
