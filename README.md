@@ -264,7 +264,7 @@ data_wide <- pivot_textgrid_tiers(
 )
 
 data_wide
-#> # A tibble: 108 × 20
+#> # A tibble: 108 × 18
 #>    speaker    file   words words_xmin words_xmax words_xmid words_annotation_num
 #>    <chr>      <chr>  <chr>      <dbl>      <dbl>      <dbl>                <int>
 #>  1 speaker001 s2T01… ""         0          0.297      0.149                    1
@@ -278,11 +278,10 @@ data_wide
 #>  9 speaker001 s2T01… ""         0.972      1.35       1.16                     4
 #> 10 speaker001 s2T02… ""         0          0.297      0.149                    1
 #> # ℹ 98 more rows
-#> # ℹ 13 more variables: words_tier_num <dbl>, words_tier_type <chr>,
-#> #   tier_xmin.x <dbl>, tier_xmax.x <dbl>, phones <chr>, phones_xmin <dbl>,
+#> # ℹ 11 more variables: words_tier_num <dbl>, words_tier_type <chr>,
+#> #   tier_xmin <dbl>, tier_xmax <dbl>, phones <chr>, phones_xmin <dbl>,
 #> #   phones_xmax <dbl>, phones_xmid <dbl>, phones_annotation_num <int>,
-#> #   phones_tier_num <dbl>, phones_tier_type <chr>, tier_xmin.y <dbl>,
-#> #   tier_xmax.y <dbl>
+#> #   phones_tier_num <dbl>, phones_tier_type <chr>
 
 # more clearly,
 data_wide |> 
@@ -395,10 +394,10 @@ bench::mark(
 #> # A tibble: 4 × 6
 #>   expression        min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr>   <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 lapply_guess    4.12s    4.28s     0.231   176.6MB     1.57
-#> 2 lapply_set      3.78s    3.96s     0.252   168.7MB     1.41
-#> 3 future_guess    1.41s     1.5s     0.657     5.1MB     0   
-#> 4 future_set       1.4s    1.47s     0.662     5.1MB     0
+#> 1 lapply_guess    3.96s    4.03s     0.245   175.5MB    1.67 
+#> 2 lapply_set      3.73s    3.78s     0.264  167.62MB    1.48 
+#> 3 future_guess    1.37s    1.39s     0.717    5.09MB    0.143
+#> 4 future_set      1.28s    1.33s     0.757    5.09MB    0
 ```
 
 ### Helpful columns

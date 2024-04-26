@@ -11,7 +11,7 @@
 #'   intervals that contain each phone interval. `tiers` should be ordered from
 #'   broadest to narrowest (e.g, `"word"` preceding `"phone"`).
 #' @param join_cols character vector of the columns that will uniquely identify
-#'   a textgrid file. Defaults to `c("file", "tier_xmin", "tier_xmax")` because
+#'   a textgrid file. Defaults to `"file"` because
 #'   these columns have identical values for tiers read from the same textgrid
 #'   file.
 #' @return a dataframe with just the intervals from tiers named in `tiers`
@@ -56,7 +56,7 @@
 pivot_textgrid_tiers <- function(
     data,
     tiers,
-    join_cols = c("file", "tier_xmin", "tier_xmax")
+    join_cols = "file"
 ) {
   {
     stopifnot(
@@ -71,6 +71,10 @@ pivot_textgrid_tiers <- function(
   }
   tiers <- unique(tiers)
   data <- data[data[["tier_name"]] %in% tiers, ]
+
+  join_cols <- join_cols |>
+    c("tier_xmin", "tier_xmax") |>
+    unique()
 
   f <- function(x, y) left_join_nested_tiers(x, y, join_cols)
 
