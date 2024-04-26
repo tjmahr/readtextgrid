@@ -113,6 +113,9 @@ pivot_single_tier <- function(data, join_cols) {
   data
 }
 
+# For the dplyr::join_by() syntax
+utils::globalVariables(c("x", "y"))
+
 left_join_nested_tiers <- function(data_parent, data_child, join_cols) {
   x_names <- data_parent[["tier_name"]][1] |>
     paste0("_", c("xmin", "xmax"))

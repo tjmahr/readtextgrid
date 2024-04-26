@@ -4,11 +4,7 @@
 \alias{pivot_textgrid_tiers}
 \title{Pivot a textgrid into wide format, respecting nested tiers}
 \usage{
-pivot_textgrid_tiers(
-  data,
-  tiers,
-  join_cols = c("file", "tier_xmin", "tier_xmax")
-)
+pivot_textgrid_tiers(data, tiers, join_cols = "file")
 }
 \arguments{
 \item{data}{a textgrid dataframe created with \code{\link[=read_textgrid]{read_textgrid()}}}
@@ -23,7 +19,7 @@ intervals that contain each phone interval. \code{tiers} should be ordered from
 broadest to narrowest (e.g, \code{"word"} preceding \code{"phone"}).}
 
 \item{join_cols}{character vector of the columns that will uniquely identify
-a textgrid file. Defaults to \code{c("file", "tier_xmin", "tier_xmax")} because
+a textgrid file. Defaults to \code{"file"} because
 these columns have identical values for tiers read from the same textgrid
 file.}
 }
