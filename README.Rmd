@@ -165,6 +165,54 @@ data_nested
 tidyr::unnest(data_nested, "data")
 ```
 
+## Pivoting textgrids [dev version]
+
+In the textgrids above, there is a natural nesting or hierarchy to the tiers.
+Intervals in `words` tier contain intervals in the `phones` tier. It is often
+necessary to group intervals by their parent intervals (group phones by words).
+This package provides the `pivot_textgrid_tiers()` function to convert textgrids
+into a wide format in a way that respect the nesting/hierarchy of tiers.
+
+```{r}
+data_wide <- pivot_textgrid_tiers(
+  data, 
+  tiers = c("words", "phones"), 
+  join_cols = c("speaker", "file")
+)
+
+data_wide
+
+# more clearly,
+data_wide |> 
+  select(
+    speaker, file, words, phones, 
+    words_xmin, words_xmax, phones_xmin, phones_xmax
+  )
+```
+
+Some remarks:
+
+  - Each tier in `tiers` becomes a batch of columns. For the rows for `words`
+    become `words` (the original `text` value), `words_xmin`, `words_xmax`, etc.
+  - The columns in `join_cols` should uniquely identify a textgrid file, so the
+    combination of `speaker` and `file` is needed in the case where different
+    speakers have the same file.
+  - The tier names in `tiers` should be given in the order of their nesting from
+    outside to inside (e.g., `words` contain `phones`). Behind the scenes,
+    `dplyr::left_join(..., relationship = "one-to-many")` is used to constrain
+    how intervals are combined. 
+
+This function also works on a single `tiers` value. In this case, the function
+returns just the intervals in that tier with the columns renamed and prefixed.
+
+```{r}
+data |> 
+  pivot_textgrid_tiers(
+    tiers = "words", 
+    join_cols = c("speaker", "file")
+  )
+```
+
 
 ## Other tips
 

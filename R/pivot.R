@@ -22,6 +22,7 @@
 #'   name. For example, the `xmax` column in a `words` tier is renamed to
 #'   `words_xmax`. An additional helper column `xmid` is added and prefixed
 #'   appropriately. See examples below.
+#' @export
 #'
 #' @details
 #' For the joining nested intervals, two intervals *a* and *b* are combined into

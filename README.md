@@ -247,6 +247,107 @@ tidyr::unnest(data_nested, "data")
 #> # ℹ 2 more variables: text <chr>, annotation_num <int>
 ```
 
+## Pivoting textgrids \[dev version\]
+
+In the textgrids above, there is a natural nesting or hierarchy to the
+tiers. Intervals in `words` tier contain intervals in the `phones` tier.
+It is often necessary to group intervals by their parent intervals
+(group phones by words). This package provides the
+`pivot_textgrid_tiers()` function to convert textgrids into a wide
+format in a way that respect the nesting/hierarchy of tiers.
+
+``` r
+data_wide <- pivot_textgrid_tiers(
+  data, 
+  tiers = c("words", "phones"), 
+  join_cols = c("speaker", "file")
+)
+
+data_wide
+#> # A tibble: 108 × 20
+#>    speaker    file   words words_xmin words_xmax words_xmid words_annotation_num
+#>    <chr>      <chr>  <chr>      <dbl>      <dbl>      <dbl>                <int>
+#>  1 speaker001 s2T01… ""         0          0.297      0.149                    1
+#>  2 speaker001 s2T01… "bir…      0.297      0.522      0.410                    2
+#>  3 speaker001 s2T01… "bir…      0.297      0.522      0.410                    2
+#>  4 speaker001 s2T01… "bir…      0.297      0.522      0.410                    2
+#>  5 speaker001 s2T01… "hou…      0.522      0.972      0.747                    3
+#>  6 speaker001 s2T01… "hou…      0.522      0.972      0.747                    3
+#>  7 speaker001 s2T01… "hou…      0.522      0.972      0.747                    3
+#>  8 speaker001 s2T01… ""         0.972      1.35       1.16                     4
+#>  9 speaker001 s2T01… ""         0.972      1.35       1.16                     4
+#> 10 speaker001 s2T02… ""         0          0.297      0.149                    1
+#> # ℹ 98 more rows
+#> # ℹ 13 more variables: words_tier_num <dbl>, words_tier_type <chr>,
+#> #   tier_xmin.x <dbl>, tier_xmax.x <dbl>, phones <chr>, phones_xmin <dbl>,
+#> #   phones_xmax <dbl>, phones_xmid <dbl>, phones_annotation_num <int>,
+#> #   phones_tier_num <dbl>, phones_tier_type <chr>, tier_xmin.y <dbl>,
+#> #   tier_xmax.y <dbl>
+
+# more clearly,
+data_wide |> 
+  select(
+    speaker, file, words, phones, 
+    words_xmin, words_xmax, phones_xmin, phones_xmax
+  )
+#> # A tibble: 108 × 8
+#>    speaker    file    words phones words_xmin words_xmax phones_xmin phones_xmax
+#>    <chr>      <chr>   <chr> <chr>       <dbl>      <dbl>       <dbl>       <dbl>
+#>  1 speaker001 s2T01.… ""    "sil"       0          0.297       0           0.297
+#>  2 speaker001 s2T01.… "bir… "B"         0.297      0.522       0.297       0.36 
+#>  3 speaker001 s2T01.… "bir… "ER1"       0.297      0.522       0.36        0.495
+#>  4 speaker001 s2T01.… "bir… "D"         0.297      0.522       0.495       0.522
+#>  5 speaker001 s2T01.… "hou… "HH"        0.522      0.972       0.522       0.621
+#>  6 speaker001 s2T01.… "hou… "AW1"       0.522      0.972       0.621       0.783
+#>  7 speaker001 s2T01.… "hou… "S"         0.522      0.972       0.783       0.972
+#>  8 speaker001 s2T01.… ""    "sp"        0.972      1.35        0.972       1.33 
+#>  9 speaker001 s2T01.… ""    ""          0.972      1.35        1.33        1.35 
+#> 10 speaker001 s2T02.… ""    "sil"       0          0.297       0           0.297
+#> # ℹ 98 more rows
+```
+
+Some remarks:
+
+- Each tier in `tiers` becomes a batch of columns. For the rows for
+  `words` become `words` (the original `text` value), `words_xmin`,
+  `words_xmax`, etc.
+- The columns in `join_cols` should uniquely identify a textgrid file,
+  so the combination of `speaker` and `file` is needed in the case where
+  different speakers have the same file.
+- The tier names in `tiers` should be given in the order of their
+  nesting from outside to inside (e.g., `words` contain `phones`).
+  Behind the scenes,
+  `dplyr::left_join(..., relationship = "one-to-many")` is used to
+  constrain how intervals are combined.
+
+This function also works on a single `tiers` value. In this case, the
+function returns just the intervals in that tier with the columns
+renamed and prefixed.
+
+``` r
+data |> 
+  pivot_textgrid_tiers(
+    tiers = "words", 
+    join_cols = c("speaker", "file")
+  )
+#> # A tibble: 42 × 11
+#>    speaker    file   words words_xmin words_xmax words_xmid words_annotation_num
+#>    <chr>      <chr>  <chr>      <dbl>      <dbl>      <dbl>                <int>
+#>  1 speaker001 s2T01… ""         0          0.297      0.149                    1
+#>  2 speaker001 s2T01… "bir…      0.297      0.522      0.410                    2
+#>  3 speaker001 s2T01… "hou…      0.522      0.972      0.747                    3
+#>  4 speaker001 s2T01… ""         0.972      1.35       1.16                     4
+#>  5 speaker001 s2T02… ""         0          0.297      0.149                    1
+#>  6 speaker001 s2T02… "cow…      0.297      0.702      0.500                    2
+#>  7 speaker001 s2T02… "boo…      0.702      1.17       0.936                    3
+#>  8 speaker001 s2T02… ""         1.17       1.59       1.38                     4
+#>  9 speaker001 s2T03… ""         0          0.369      0.184                    1
+#> 10 speaker001 s2T03… "hug"      0.369      0.657      0.513                    2
+#> # ℹ 32 more rows
+#> # ℹ 4 more variables: words_tier_num <dbl>, words_tier_type <chr>,
+#> #   tier_xmin <dbl>, tier_xmax <dbl>
+```
+
 ## Other tips
 
 ### Speeding things up
@@ -294,10 +395,10 @@ bench::mark(
 #> # A tibble: 4 × 6
 #>   expression        min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr>   <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 lapply_guess    3.61s    3.67s     0.262  183.89MB     1.89
-#> 2 lapply_set      3.52s    3.54s     0.278  176.01MB     1.61
-#> 3 future_guess    1.33s    1.36s     0.732    5.14MB     0   
-#> 4 future_set      1.24s    1.27s     0.783    5.14MB     0
+#> 1 lapply_guess    4.12s    4.28s     0.231   176.6MB     1.57
+#> 2 lapply_set      3.78s    3.96s     0.252   168.7MB     1.41
+#> 3 future_guess    1.41s     1.5s     0.657     5.1MB     0   
+#> 4 future_set       1.4s    1.47s     0.662     5.1MB     0
 ```
 
 ### Helpful columns
