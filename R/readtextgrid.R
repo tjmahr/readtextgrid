@@ -65,11 +65,21 @@ read_textgrid_lines <- function(lines, file = NULL) {
 #'    Create TextGrid command. This file is saved as UTF-8 encoding.
 #' 2. `"utf_16_be.TextGrid"` - a TextGrid with some IPA characters entered using
 #'    Praat's IPA character selector. This file is saved with UTF-16 encoding.
+#' 3. `"nested-intervals.TextGrid"` - A textgrid containing an `"utterance"`
+#'    tier, a `"words"` tier, and a `"phones"` tier. This file is typical of
+#'    forced alignment textgrids where utterances contain words which contain
+#'    speech segments. In this case, alignment was made by hand so that word
+#'    and phone boundaries do not correspond exactly.
 #'
 #' @export
 example_textgrid <- function(which = 1) {
-  basename <- c("Mary_John_bell.TextGrid", "utf_16_be.TextGrid")[which]
-  system.file(basename, package = "readtextgrid")
+  choices <- c(
+    "Mary_John_bell.TextGrid",
+    "utf_16_be.TextGrid",
+    "nested-intervals.TextGrid"
+  )
+
+  system.file(choices[which], package = "readtextgrid")
 }
 
 parse_textgrid_lines <- function(lines) {

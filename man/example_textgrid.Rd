@@ -27,5 +27,10 @@ Two files are included:
 Create TextGrid command. This file is saved as UTF-8 encoding.
 \item \code{"utf_16_be.TextGrid"} - a TextGrid with some IPA characters entered using
 Praat's IPA character selector. This file is saved with UTF-16 encoding.
+\item \code{"nested-intervals.TextGrid"} - A textgrid containing an \code{"utterance"}
+tier, a \code{"words"} tier, and a \code{"phones"} tier. This file is typical of
+forced alignment textgrids where utterances contain words which contain
+speech segments. In this case, alignment was made by hand so that word
+and phone boundaries do not correspond exactly.
 }
 }
