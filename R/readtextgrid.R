@@ -86,7 +86,7 @@ parse_textgrid_lines <- function(lines) {
   lines |>
     slice_sections("item") |>
     purrr::map(parse_item_lines) |>
-    plyr::ldply(as.data.frame, stringsAsFactors = FALSE)
+    dplyr::bind_rows()
 }
 
 slice_sections <- function(lines, section_head) {
@@ -133,7 +133,7 @@ parse_interval_tier <- function(lines_interval_tier) {
     slice_sections("intervals") |>
     purrr::map(get_field_list, fields = c("xmin", "xmax", "text")) |>
     purrr::imap(add_annotation_num) |>
-    plyr::ldply(as.data.frame, stringsAsFactors = FALSE)
+    dplyr::bind_rows()
 }
 
 parse_point_tier <- function(lines_point_tier) {
@@ -144,7 +144,7 @@ parse_point_tier <- function(lines_point_tier) {
       slice_sections("points") |>
       purrr::map(get_field_list, fields = c("number", "mark")) |>
       purrr::imap(add_annotation_num) |>
-      plyr::ldply(as.data.frame, stringsAsFactors = FALSE)
+      dplyr::bind_rows()
 
     # We treat points as zero-width intervals
     df[["xmin"]] <- df[["number"]]
@@ -200,7 +200,7 @@ remove_na <- function(xs) {
 }
 
 str_unquote <- function(xs) {
-  stringr::str_remove_all(xs, "^\"|\"$")
+  gsub("^\"|\"$", "", xs)
 }
 
 str_detect_any <- function(xs, pattern) {
