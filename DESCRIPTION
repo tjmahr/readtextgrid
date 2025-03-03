@@ -21,7 +21,6 @@ Suggests:
 RoxygenNote: 7.3.2
 Imports: 
     stats,
-    utils,
     tibble,
     purrr,
     readr,

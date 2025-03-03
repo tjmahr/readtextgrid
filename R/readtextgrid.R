@@ -124,12 +124,12 @@ parse_textgrid_lines <- function(lines, call = caller_env()) {
     tidyr::nest(.by = "tier_num", .key = "data") |>
     dplyr::mutate(
       marks = purrr::map(
-        data,
+        !!sym("data"),
         ~parse_tier(.x, tg_list)
       )
     ) |>
-    tidyr::unnest(marks) |>
-    dplyr::select(-data)
+    tidyr::unnest(!!sym("marks")) |>
+    dplyr::select(-!!sym("data"))
 }
 
 parse_tier <- function(tier_df, tg_list) {
@@ -260,7 +260,7 @@ validate_tg_list <- function(tg_list, call = caller_env()) {
   tier_idces
 
   if (min(tier_idces) != 6) {
-    cli_abort("TextGrid appears misformatted", call = call)
+    cli::cli_abort("TextGrid appears misformatted", call = call)
   }
 
   tier_types <- tg_list[tier_idces] |>
@@ -285,7 +285,7 @@ validate_tg_list <- function(tg_list, call = caller_env()) {
     unlist()
 
   if (!all(correct_len)) {
-    cli_abort("TextGrid appears misformatted", call = call)
+    cli::cli_abort("TextGrid appears misformatted", call = call)
   }
 
   tier_idces
