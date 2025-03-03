@@ -22,6 +22,32 @@ test_that("example_textgrid works", {
   expect_equal(nrow(tg), 3)
 })
 
+test_that("comment textgrid works", {
+  path <- testthat::test_path("test-data/comment.TextGrid")
+  tg <- read_textgrid(path)
+  testthat::expect_s3_class(tg, "tbl")
+  expect_equal(nrow(tg), 3)
+})
+
+test_that("short format textgrid works", {
+  path <- testthat::test_path("test-data/short.TextGrid")
+  tg <- read_textgrid(path)
+  testthat::expect_s3_class(tg, "tbl")
+  expect_equal(nrow(tg), 3)
+})
+
+test_that("quoted text textgrid works", {
+  path <- testthat::test_path("test-data/quoted.TextGrid")
+  tg <- read_textgrid(path)
+  testthat::expect_s3_class(tg, "tbl")
+  has_double <- any(grepl('""', tg$text))
+  has_single <- any(grepl('"', tg$text))
+  expect_false(has_double)
+  expect_true(has_single)
+})
+
+
+
 test_that("encoding support", {
   example_textgrid(1) |>
     read_textgrid(encoding = "UTF-8") |>

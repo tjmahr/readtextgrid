@@ -1,0 +1,16 @@
+"ooTextFile"
+"TextGrid"
+0  2.3  ! time domain of TextGrid
+<exists>
+3 tiers
+"IntervalTier"  "Mary"  ! type and name of tier 1
+0  2.3  ! time domain of tier 1
+1 interval coming
+0  2.3  ""  ! interval 1 on tier 1
+"IntervalTier"  "John"  ! type and name of tier 2
+0  2.3  ! time domain of tier 2
+1 interval coming
+0  2.3  ""  ! interval 1 on tier 2
+"TextTier"  "bell"  ! type and name of tier 3
+0  2.3  ! time domain of tier 3
+0 points coming

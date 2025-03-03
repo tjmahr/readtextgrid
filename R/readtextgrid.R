@@ -42,7 +42,6 @@ read_textgrid_lines <- function(lines, file = NULL) {
 
   lines |>
     parse_textgrid_lines() |>
-    tibble::as_tibble() |>
     tibble::add_column(file = file, .before = 1)
 }
 
@@ -82,127 +81,217 @@ example_textgrid <- function(which = 1) {
   system.file(choices[which], package = "readtextgrid")
 }
 
-parse_textgrid_lines <- function(lines) {
+#' @import rlang
+parse_textgrid_lines <- function(lines, call = caller_env()) {
   lines |>
-    slice_sections("item") |>
-    purrr::map(parse_item_lines) |>
-    dplyr::bind_rows()
-}
+    # remove possible comments
+    gsub("!.*$", "", x = _) |>
+    # remove indices
+    gsub(r"{\[\d*?\]}", "", x = _) |>
+    # squish
+    stringr::str_squish() |>
+    # collapse into one string
+    stringr::str_c(
+      collapse = " "
+    ) |>
+    # concat one trailing space
+    stringr::str_c(" ") |>
+    # split into individual characters
+    stringr::str_split("") |>
+    unlist() ->
+  tg_characters
 
-slice_sections <- function(lines, section_head) {
-  re <- sprintf("^\\s+%s ?\\[\\d+\\]:?", section_head)
-  starts <- stringr::str_which(lines, re)
-  ends <- c(starts[-1] - 1, length(lines))
-  purrr::map2(starts, ends, function(x, y) lines[seq(x, y, by = 1)])
-}
+  tg_list <- char_to_value_list(tg_characters, call = call)
 
-parse_item_lines <- function(lines_items) {
-  item_num <- lines_items[1] |>
-    stringr::str_extract("\\d+") |>
-    as.numeric()
+  tier_idces <- validate_tg_list(tg_list, call = call)
 
-  tier_type <- get_field(lines_items, "class")
-  tier_name <- get_field(lines_items, "name")
-  tier_xmin <- get_field_dbl(lines_items, "xmin")
-  tier_xmax <- get_field_dbl(lines_items, "xmax")
+  tier_types <- tg_list[tier_idces] |> unlist()
 
-  stopifnot(tier_type %in% c("IntervalTier", "TextTier"))
-
-  if (tier_type == "IntervalTier") {
-    df <- parse_interval_tier(lines_items)
-  } else {
-    df <- parse_point_tier(lines_items)
-  }
-
-  df[["xmin"]] <- as.numeric(df[["xmin"]])
-  df[["xmax"]] <- as.numeric(df[["xmax"]])
-
-  tibble::add_column(
-    .data = df,
-    tier_num  = item_num,
-    tier_name = tier_name,
-    tier_type = tier_type,
-    tier_xmin = tier_xmin,
-    tier_xmax = tier_xmax,
-    .before = 1
-  )
-}
-
-parse_interval_tier <- function(lines_interval_tier) {
-  lines_interval_tier |>
-    slice_sections("intervals") |>
-    purrr::map(get_field_list, fields = c("xmin", "xmax", "text")) |>
-    purrr::imap(add_annotation_num) |>
-    dplyr::bind_rows()
-}
-
-parse_point_tier <- function(lines_point_tier) {
-  no_points <- str_detect_any(lines_point_tier, "points: size = 0")
-
-  if (!no_points) {
-    df <- lines_point_tier |>
-      slice_sections("points") |>
-      purrr::map(get_field_list, fields = c("number", "mark")) |>
-      purrr::imap(add_annotation_num) |>
-      dplyr::bind_rows()
-
-    # We treat points as zero-width intervals
-    df[["xmin"]] <- df[["number"]]
-    df[["xmax"]] <- df[["number"]]
-    df[["text"]] <- df[["mark"]]
-    df[["mark"]] <- NULL
-    df[["number"]] <- NULL
-  } else {
-    # A point interval with no points should be represented in the results.
-    df <- data.frame(
-      xmin = NA,
-      xmax = NA,
-      text = NA_character_,
-      annotation_num = NA,
-      stringsAsFactors = FALSE
+  tier_df <- tibble::tibble(
+    tier_type = tier_types,
+    tier_start = tier_idces,
+    tier_end = dplyr::lead(
+      tier_idces - 1,
+      default = length(tg_list)
     )
+  ) |>
+    dplyr::mutate(
+      tier_num = dplyr::row_number(),
+      .before = 1
+    )
+
+  tier_df |>
+    tidyr::nest(.by = "tier_num", .key = "data") |>
+    dplyr::mutate(
+      marks = purrr::map(
+        data,
+        ~parse_tier(.x, tg_list)
+      )
+    ) |>
+    tidyr::unnest(marks) |>
+    dplyr::select(-data)
+}
+
+parse_tier <- function(tier_df, tg_list) {
+  tier_list <- tg_list[tier_df$tier_start:tier_df$tier_end]
+  outer_df <- tibble::tibble(
+    tier_name = tier_list[[2]],
+    tier_type = tier_list[[1]],
+    tier_xmin = tier_list[[3]],
+    tier_xmax = tier_list[[4]]
+  )
+
+  if (tier_df$tier_end - tier_df$tier_start < 5) {
+    return(outer_df)
   }
 
-  df
+  if (tier_df$tier_type == "IntervalTier") {
+    marks_df <- make_intervals(tier_df, tg_list)
+  }
+
+  if (tier_df$tier_type == "TextTier") {
+    marks_df <- make_points(tier_df, tg_list)
+  }
+
+  outer_df |>
+    dplyr::cross_join(marks_df)
 }
 
-add_annotation_num <- function(x, y) {
-  x[["annotation_num"]] <- y
-  x
+make_intervals <- function(tier_df, tg_list) {
+  start_idx <- tier_df$tier_start + 5
+  end_idx <- tier_df$tier_end - 2
+  purrr::map(
+    seq(start_idx, end_idx, by = 3),
+    \(idx){
+      tibble::tibble(
+        xmin = tg_list[[idx]],
+        xmax = tg_list[[idx + 1]],
+        text = tg_list[[idx + 2]]
+      )
+    }
+  ) |>
+    purrr::list_rbind() |>
+    dplyr::mutate(
+      annotation_num = dplyr::row_number()
+    )
 }
 
-get_field_list <- function(lines, fields) {
-  stats::setNames(
-    lapply(fields, function(x) get_field(lines, x)),
-    fields
-  )
+make_points <- function(tier_df, tg_list) {
+  start_idx <- tier_df$tier_start + 5
+  end_idx <- tier_df$tier_end - 1
+  purrr::map(
+    seq(start_idx, end_idx, by = 2),
+    \(idx){
+      tibble::tibble(
+        xmin = tg_list[[idx]],
+        text = tg_list[[idx + 1]]
+      )
+    }
+  ) |>
+    purrr::list_rbind() |>
+    dplyr::mutate(
+      annotation_num = dplyr::row_number()
+    )
 }
 
-# Find first match of "[field] = [value]", returning [value]
-get_field <- function(lines, field) {
-  re <- paste0("(?<=", field, " = ).+")
+#' @import rlang
+char_to_value_list <- function(all_char, call = caller_env()) {
+  char <- F
+  # values collects values
+  values <- vector(mode = "list")
+  # cur_value collects characters
+  cur_value <- vector()
 
-  lines |>
-    stringr::str_extract(re) |>
-    remove_na() |>
-    utils::head(1) |>
-    stringr::str_trim() |>
-    str_unquote()
+  for (i in seq_along(all_char)) {
+    c <- all_char[i]
+
+    # if c is double quote, flip character mode
+    if (c == "\"") {
+      char <- !char
+    }
+
+    # if c is a space
+    # and we are not in character mode
+    # and there are values in cur_value
+    # collapse and push to values
+    if (c == " " & !char & length(cur_value) > 0) {
+      total_value <- stringr::str_c(cur_value, collapse = "")
+      values <- c(values, total_value)
+      cur_value <- vector()
+      next
+    }
+
+    # if we are not in character mode
+    # and c is a digit or decimal
+    # add to cur_value
+    if (!char & stringr::str_detect(c, r"{[\d\.]}")) {
+      cur_value <- c(cur_value, c)
+      next
+    }
+
+    # if we are in character mode
+    # add c to cur_value
+    if (char) {
+      cur_value <- c(cur_value, c)
+      next
+    }
+  }
+
+  # strip initial double quotes from strings
+  # convert numbers to numbers
+  values |>
+    purrr::map(
+      ~ ifelse(
+        stringr::str_sub(.x, 1, 1) != "\"",
+        as.numeric(.x),
+        stringr::str_sub(.x, 2, -1)
+      )
+    )
 }
 
-# Find first match of "[field] = [value]", returning [value]
-get_field_dbl <- function(lines, field) {
-  as.numeric(get_field(lines, field))
+#' @import rlang
+validate_tg_list <- function(tg_list, call = caller_env()) {
+  tg_list |>
+    purrr::map(
+      ~ stringr::str_detect(.x, "Tier")
+    ) |>
+    unlist() |>
+    which() ->
+  tier_idces
+
+  if (min(tier_idces) != 6) {
+    cli_abort("TextGrid appears misformatted", call = call)
+  }
+
+  tier_types <- tg_list[tier_idces] |>
+    unlist() |>
+    stringr::str_remove("Tier")
+
+  tier_idces2 <- c(tier_idces, length(tg_list) + 1)
+  tier_length <- diff(tier_idces2) - 5
+
+  correct_len <- purrr::map2(
+    tier_types,
+    tier_length,
+    \(ttype, tlen){
+      if (ttype == "Interval") {
+        return(tlen %% 3 == 0)
+      }
+      if (ttype == "Text") {
+        return(tlen %% 2 == 0)
+      }
+    }
+  ) |>
+    unlist()
+
+  if (!all(correct_len)) {
+    cli_abort("TextGrid appears misformatted", call = call)
+  }
+
+  tier_idces
 }
 
-remove_na <- function(xs) {
-  xs[!is.na(xs)]
-}
-
-str_unquote <- function(xs) {
-  gsub("^\"|\"$", "", xs)
-}
 
 str_detect_any <- function(xs, pattern) {
-    any(stringr::str_detect(xs, pattern))
+  any(stringr::str_detect(xs, pattern))
 }

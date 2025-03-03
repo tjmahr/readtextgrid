@@ -18,7 +18,7 @@ Encoding: UTF-8
 Depends: R (>= 4.1.0)
 Suggests: 
     testthat (>= 2.1.0)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Imports: 
     stats,
     utils,
@@ -27,7 +27,9 @@ Imports:
     readr,
     stringr,
     dplyr,
-    rlang
+    rlang,
+    cli,
+    tidyr
 URL: https://github.com/tjmahr/readtextgrid
 BugReports: https://github.com/tjmahr/readtextgrid/issues
 Roxygen: list(markdown = TRUE)
