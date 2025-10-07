@@ -82,29 +82,23 @@ example_textgrid <- function(which = 1) {
 }
 
 #' @import rlang
-parse_textgrid_lines <- function(lines, call = caller_env()) {
-  lines |>
-    # remove possible comments
-    gsub("!.*$", "", x = _) |>
-    # remove indices
-    gsub(r"{\[\d*?\]}", "", x = _) |>
-    # squish
+parse_textgrid_lines <- function(lines) {
+
+  # lines <- testthat::test_path("test-data/hard-to-parse.TextGrid") |> readLines()
+  lines <- testthat::test_path("test-data/Mary_John_bell.TextGrid") |> readLines()
+
+  tg_characters <- lines |>
     stringr::str_squish() |>
     # collapse into one string
-    stringr::str_c(
-      collapse = " "
-    ) |>
+    stringr::str_c(collapse = "\n") |>
     # concat one trailing space
     stringr::str_c(" ") |>
     # split into individual characters
     stringr::str_split("") |>
-    unlist() ->
-  tg_characters
+    unlist()
 
-  tg_list <- char_to_value_list(tg_characters, call = call)
-
-  tier_idces <- validate_tg_list(tg_list, call = call)
-
+  tg_list <- char_to_value_list(tg_characters)
+  tier_idces <- validate_tg_list(tg_list)
   tier_types <- tg_list[tier_idces] |> unlist()
 
   tier_df <- tibble::tibble(
@@ -196,68 +190,114 @@ make_points <- function(tier_df, tg_list) {
 
 #' @import rlang
 char_to_value_list <- function(all_char, call = caller_env()) {
-  char <- F
-  # values collects values
-  values <- vector(mode = "list")
-  # cur_value collects characters
+  all_char <- tg_characters
+  in_char <- FALSE
+  in_comment <- FALSE
+  in_escaped_quote <- FALSE
+
+  # Collects characters into values
   cur_value <- vector()
+  # Collects completed values
+  values <- vector(mode = "list")
 
   for (i in seq_along(all_char)) {
     c <- all_char[i]
+    whitespace_c <- c %in% c(" ", "\n")
 
-    # if c is double quote, flip character mode
-    if (c == "\"") {
-      char <- !char
+    # Comments start with ! and end with \n so we skip them
+    if (!in_char & c == "!") {
+      in_comment <- TRUE
+      next
+    }
+    if (in_comment & c == "\n") {
+      in_comment <- FALSE
+      next
     }
 
-    # if c is a space
-    # and we are not in character mode
-    # and there are values in cur_value
-    # collapse and push to values
-    if (c == " " & !char & length(cur_value) > 0) {
+    # Store character if ending an escaped quote
+    if (in_escaped_quote) {
+      cur_value <- c(cur_value, c)
+      in_escaped_quote <- !in_escaped_quote
+      next
+    }
+
+    # Start or close character mode if I see "
+    if (c == "\"" & !in_comment) {
+      # Check for "" escapes
+      peek_c <- all_char[i + 1]
+      if (peek_c == "\"" & in_char) {
+        in_escaped_quote <- TRUE
+      } else {
+        # Store closing quote
+        if (in_char) cur_value <- c(cur_value, c)
+        in_char <- !in_char
+      }
+    }
+
+    # Todo: Adjust the next two so they write out the buffer if character mode
+    # is closing (I see a space and I just closed character mode) or if the
+    # buffer has a number (I see a space and the buffer is only number
+    # characters or a decimal point.)
+
+    # Collect values if I see a space and I am not in character mode
+    if (whitespace_c & !in_char & !in_comment & length(cur_value) > 0) {
       total_value <- stringr::str_c(cur_value, collapse = "")
       values <- c(values, total_value)
       cur_value <- vector()
       next
     }
 
-    # if we are not in character mode
-    # and c is a digit or decimal
-    # add to cur_value
-    if (!char & stringr::str_detect(c, r"{[\d\.]}")) {
+    # Store characters if they are numeric
+    if (!in_char & !in_comment & stringr::str_detect(c, r"{[\d\.]}")) {
       cur_value <- c(cur_value, c)
       next
     }
 
-    # if we are in character mode
-    # add c to cur_value
-    if (char) {
+    # Store characters
+    if (in_char) {
       cur_value <- c(cur_value, c)
       next
     }
   }
-
   # strip initial double quotes from strings
   # convert numbers to numbers
   values |>
-    purrr::map(
-      ~ ifelse(
-        stringr::str_sub(.x, 1, 1) != "\"",
-        as.numeric(.x),
-        stringr::str_sub(.x, 2, -1)
-      )
-    )
+    lapply(convert_value)
+
+  # values |>
+  #   lapply(function(x) if (startsWith(x, "\"")) x else as.numeric(x))
+
+  # values |>
+  #   purrr::map(
+  #     ~ ifelse(
+  #       stringr::str_sub(.x, 1, 1) != "\"",
+  #       as.numeric(.x),
+  #       stringr::str_sub(.x, 2, -1)
+  #     )
+  #   )
 }
+
+convert_value <- function(x) {
+  v <- type.convert(x, as.is = TRUE, tryLogical = FALSE)
+  if (is.character(v)) {
+    # unquote strings
+    v <- substr(v, 2, nchar(v) - 1)
+    # undo "" escapement
+    v <- stringr::str_replace_all(v, "\"\"", "\"")
+  }
+  v
+}
+
 
 #' @import rlang
 validate_tg_list <- function(tg_list, call = caller_env()) {
-  tg_list |>
+  tier_idces <- tg_list |>
     purrr::map(
       ~ stringr::str_detect(.x, "Tier")
     ) |>
     unlist() |>
-    which() ->
-  tier_idces
+    which()
+
 
   if (min(tier_idces) != 6) {
     cli::cli_abort("TextGrid appears misformatted", call = call)
