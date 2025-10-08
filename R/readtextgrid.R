@@ -85,7 +85,7 @@ example_textgrid <- function(which = 1) {
 parse_textgrid_lines <- function(lines) {
 
   # lines <- testthat::test_path("test-data/hard-to-parse.TextGrid") |> readLines()
-  lines <- testthat::test_path("test-data/Mary_John_bell.TextGrid") |> readLines()
+  # lines <- testthat::test_path("test-data/Mary_John_bell.TextGrid") |> readLines()
 
   tg_characters <- lines |>
     stringr::str_squish() |>
@@ -190,9 +190,8 @@ make_points <- function(tier_df, tg_list) {
 
 #' @import rlang
 char_to_value_list <- function(all_char, call = caller_env()) {
-  all_char <- tg_characters
-  in_char <- FALSE
   in_comment <- FALSE
+  in_string <- FALSE
   in_escaped_quote <- FALSE
 
   # Collects characters into values
@@ -203,9 +202,10 @@ char_to_value_list <- function(all_char, call = caller_env()) {
   for (i in seq_along(all_char)) {
     c <- all_char[i]
     whitespace_c <- c %in% c(" ", "\n")
+    numeric_c <- stringr::str_detect(c, "\\d|[.]")
 
     # Comments start with ! and end with \n so we skip them
-    if (!in_char & c == "!") {
+    if (!in_string & c == "!") {
       in_comment <- TRUE
       next
     }
@@ -221,63 +221,45 @@ char_to_value_list <- function(all_char, call = caller_env()) {
       next
     }
 
-    # Start or close character mode if I see "
-    if (c == "\"" & !in_comment) {
-      # Check for "" escapes
-      peek_c <- all_char[i + 1]
-      if (peek_c == "\"" & in_char) {
-        in_escaped_quote <- TRUE
-      } else {
-        # Store closing quote
-        if (in_char) cur_value <- c(cur_value, c)
-        in_char <- !in_char
-      }
-    }
-
-    # Todo: Adjust the next two so they write out the buffer if character mode
-    # is closing (I see a space and I just closed character mode) or if the
-    # buffer has a number (I see a space and the buffer is only number
-    # characters or a decimal point.)
-
-    # Collect values if I see a space and I am not in character mode
-    if (whitespace_c & !in_char & !in_comment & length(cur_value) > 0) {
+    # Collect values if able
+    if (whitespace_c & !in_string & !in_comment & length(cur_value) > 0) {
       total_value <- stringr::str_c(cur_value, collapse = "")
-      values <- c(values, total_value)
+
+      if (tg_parse_is_string(total_value) || tg_parse_is_number(total_value)) {
+        values <- c(values, total_value)
+      }
       cur_value <- vector()
       next
     }
 
-    # Store characters if they are numeric
-    if (!in_char & !in_comment & stringr::str_detect(c, r"{[\d\.]}")) {
-      cur_value <- c(cur_value, c)
-      next
+    # Start or close character mode if I see "
+    if (c == "\"" & !in_comment) {
+      # Check for "" escapes
+      peek_c <- all_char[i + 1]
+      if (peek_c == "\"" & in_string) {
+        in_escaped_quote <- TRUE
+      } else {
+        in_string <- !in_string
+      }
     }
 
-    # Store characters
-    if (in_char) {
-      cur_value <- c(cur_value, c)
-      next
-    }
+    cur_value <- c(cur_value, c)
   }
-  # strip initial double quotes from strings
-  # convert numbers to numbers
+
   values |>
-    lapply(convert_value)
+    lapply(tg_parse_convert_value)
 
-  # values |>
-  #   lapply(function(x) if (startsWith(x, "\"")) x else as.numeric(x))
-
-  # values |>
-  #   purrr::map(
-  #     ~ ifelse(
-  #       stringr::str_sub(.x, 1, 1) != "\"",
-  #       as.numeric(.x),
-  #       stringr::str_sub(.x, 2, -1)
-  #     )
-  #   )
 }
 
-convert_value <- function(x) {
+tg_parse_is_string <- function(x) {
+  substr(x, 1, 1) == "\"" && substr(x, nchar(x), nchar(x)) == "\""
+}
+
+tg_parse_is_number <- function(x) {
+  stringr::str_detect(x, "^-?\\d+(\\.\\d*)?")
+}
+
+tg_parse_convert_value <- function(x) {
   v <- type.convert(x, as.is = TRUE, tryLogical = FALSE)
   if (is.character(v)) {
     # unquote strings

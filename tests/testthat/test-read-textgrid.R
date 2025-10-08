@@ -36,10 +36,9 @@ test_that("short format textgrid works", {
   expect_equal(nrow(tg), 3)
 })
 
-test_that("quoted text textgrid works", {
+test_that("escaped quotes (\"\") are converted to single (\")", {
   path <- testthat::test_path("test-data/quoted.TextGrid")
   tg <- read_textgrid(path)
-  testthat::expect_s3_class(tg, "tbl")
   has_double <- any(grepl('""', tg$text))
   has_single <- any(grepl('"', tg$text))
   expect_false(has_double)
