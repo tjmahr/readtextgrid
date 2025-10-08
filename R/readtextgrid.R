@@ -83,10 +83,6 @@ example_textgrid <- function(which = 1) {
 
 #' @import rlang
 parse_textgrid_lines <- function(lines) {
-
-  # lines <- testthat::test_path("test-data/hard-to-parse.TextGrid") |> readLines()
-  # lines <- testthat::test_path("test-data/Mary_John_bell.TextGrid") |> readLines()
-
   tg_characters <- lines |>
     stringr::str_squish() |>
     # collapse into one string
@@ -97,7 +93,7 @@ parse_textgrid_lines <- function(lines) {
     stringr::str_split("") |>
     unlist()
 
-  tg_list <- char_to_value_list(tg_characters)
+  tg_list <- tokenize_textgrid_chars(tg_characters)
   tier_idces <- validate_tg_list(tg_list)
   tier_types <- tg_list[tier_idces] |> unlist()
 
@@ -189,28 +185,52 @@ make_points <- function(tier_df, tg_list) {
 }
 
 #' @import rlang
-char_to_value_list <- function(all_char, call = caller_env()) {
-  in_comment <- FALSE
-  in_string <- FALSE
-  in_escaped_quote <- FALSE
+tokenize_textgrid_chars <- function(all_char, call = caller_env()) {
+  # The parser rules here follow the textgrid specifications
+  # <https://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html> EXCEPT
+  # when they contradict the behavior of Praat.exe. For example, the specs says
+  # the main literals are freestanding strings and numbers, where freestanding
+  # means that they have a whitespace or boundary (newline or file start/end).
+  # But Praat.exe can handle numbers like "10.00!comment". So, this parser
+  # gathers freestanding literals but only keeps ones that are strings or
+  # start with a valid number (the non-numeric characters are lopped off.)
 
-  # Collects characters into values
-  cur_value <- vector()
-  # Collects completed values
-  values <- vector(mode = "list")
+  in_strong_comment <- FALSE         # comment mode: ! to new line \n
+  in_string <- FALSE                 # string mode: "Quote to quote"
+  in_escaped_quote <- FALSE          # escaped quote: "" inside of a string
+
+  cur_value <- vector()             # Collects characters into values
+  values <- vector(mode = "list")   # Collects completed values
 
   for (i in seq_along(all_char)) {
     c <- all_char[i]
-    whitespace_c <- c %in% c(" ", "\n")
-    numeric_c <- stringr::str_detect(c, "\\d|[.]")
+    c_is_whitespace <- c %in% c(" ", "\n")
+    c_starts_string <- c == "\""
 
-    # Comments start with ! and end with \n so we skip them
+    # Comments start with ! and end with \n. Skip characters.
     if (!in_string & c == "!") {
-      in_comment <- TRUE
+      in_strong_comment <- TRUE
       next
     }
-    if (in_comment & c == "\n") {
-      in_comment <- FALSE
+    if (in_strong_comment) {
+      if (c == "\n") in_strong_comment <- FALSE
+      next
+    }
+
+    # Whitespace delimits values so collect values if we see whitespace
+    if (c_is_whitespace & !in_string) {
+      # Skip whitespace if no values collected so far
+      if (length(cur_value) == 0) next
+
+      # Collect only numbers and strings
+      total_value <- stringr::str_c(cur_value, collapse = "")
+      if (tg_parse_is_number(total_value)) {
+        total_value <- stringr::str_extract(total_value, "^-?\\d+(\\.\\d*)?")
+        values <- c(values, total_value)
+      } else if (tg_parse_is_string(total_value)) {
+        values <- c(values, total_value)
+      }
+      cur_value <- vector()
       next
     }
 
@@ -221,19 +241,8 @@ char_to_value_list <- function(all_char, call = caller_env()) {
       next
     }
 
-    # Collect values if able
-    if (whitespace_c & !in_string & !in_comment & length(cur_value) > 0) {
-      total_value <- stringr::str_c(cur_value, collapse = "")
-
-      if (tg_parse_is_string(total_value) || tg_parse_is_number(total_value)) {
-        values <- c(values, total_value)
-      }
-      cur_value <- vector()
-      next
-    }
-
-    # Start or close character mode if I see "
-    if (c == "\"" & !in_comment) {
+    # Start or close string mode if I see "
+    if (c_starts_string) {
       # Check for "" escapes
       peek_c <- all_char[i + 1]
       if (peek_c == "\"" & in_string) {
@@ -274,12 +283,9 @@ tg_parse_convert_value <- function(x) {
 #' @import rlang
 validate_tg_list <- function(tg_list, call = caller_env()) {
   tier_idces <- tg_list |>
-    purrr::map(
-      ~ stringr::str_detect(.x, "Tier")
-    ) |>
+    lapply(stringr::str_detect, "Tier") |>
     unlist() |>
     which()
-
 
   if (min(tier_idces) != 6) {
     cli::cli_abort("TextGrid appears misformatted", call = call)

@@ -7,7 +7,7 @@
 ! Extra unquoted text is also a comment like the word "tiers" below
 4 tiers         ! This comment has a stray quote "
 "IntervalTier"  "! Fake Comment"
-0  2.3  ! time domain of tier 1
+    0              2.3  ! time domain of tier 1
 3 interval coming
 0  1  ""  ! interval 1 on tier 1
 1  2  """"""  ! interval 2 on tier 1
