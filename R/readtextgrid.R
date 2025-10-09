@@ -65,16 +65,15 @@ parse_textgrid_lines <- function(lines) {
     unlist()
 
   tg_tokens <- tokenize_textgrid_chars(tg_characters)
-  tier_indices <- find_tier_starts(tg_tokens)
-  tier_types <- tg_tokens[tier_indices] |> unlist()
+  tier_indices <- find_tier_boundaries(tg_tokens)
+  tier_types <- tg_tokens[tier_indices$start] |> unlist()
 
   tier_info_df <- tibble::tibble(
     tier_num = seq_along(tier_types),
     tier_type = tier_types,
-    tier_start = tier_indices,
-    tier_end = dplyr::lead(tier_indices - 1, default = length(tg_tokens))
+    tier_start = tier_indices$start,
+    tier_end = tier_indices$end
   )
-
 
   data <- tier_info_df |>
     split(~tier_num) |>
@@ -266,7 +265,7 @@ tg_parse_convert_value <- function(x) {
 
 
 #' @import rlang
-find_tier_starts <- function(tg_tokens) {
+find_tier_boundaries <- function(tg_tokens) {
   # TODO:
   # TextGrid_checkInvariants_e() in Praat source provides strong and weak
   # invariants
@@ -277,21 +276,26 @@ find_tier_starts <- function(tg_tokens) {
   # don't use regexes. Just consume tokens.
   num_tiers <- tg_tokens[[5]]
   tier_starts <- integer(num_tiers)
+  tier_ends <- integer(num_tiers)
   tier_starts[1] <- 6L
 
   for (tier_i in seq_len(num_tiers)) {
-    if (tier_i == num_tiers) break
-
     type <- tg_tokens[[tier_starts[tier_i]]]
     size <- tg_tokens[[tier_starts[tier_i] + 4]]
+    # promote negative size to 0
+    size <- max(c(0, size))
+
     if (type == "IntervalTier") {
       tier_end <- tier_starts[tier_i] + 4 + 3 * size
-      tier_starts[tier_i + 1] <- tier_end + 1
     } else {
       # 2 lines per point but they can have size 0
       tier_end <- tier_starts[tier_i] + 4 + 2 * size
+    }
+
+    if (tier_i != num_tiers) {
       tier_starts[tier_i + 1] <- tier_end + 1
     }
+    tier_ends[tier_i] <- tier_end
   }
 
   tier_types <- tg_tokens[tier_starts] |> unlist()
@@ -303,7 +307,7 @@ find_tier_starts <- function(tg_tokens) {
     rlang::abort("TextGrid appears misformatted")
   }
 
-  tier_starts
+  list(start = tier_starts, end = tier_ends)
 }
 
 

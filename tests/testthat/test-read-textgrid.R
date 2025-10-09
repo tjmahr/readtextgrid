@@ -67,10 +67,12 @@ test_that("can read in hard-to-parse file", {
   # a version of the TextGrid opened and saved by Praat to a long TextGrid
   path2 <- testthat::test_path("test-data/hard-to-parse-normalized.TextGrid")
   tg2 <- read_textgrid(path2)
+  tg2$file <- "hard-to-parse.TextGrid"
   expect_equal(tg, tg2)
 
   # Validate against v1
   tg3 <- .v1_read_textgrid(path2)
+  tg3$file <- "hard-to-parse.TextGrid"
   expect_equal(tg2, tg3)
 })
 
