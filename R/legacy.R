@@ -99,6 +99,7 @@
     df[["text"]] <- df[["mark"]]
     df[["mark"]] <- NULL
     df[["number"]] <- NULL
+    df <- df[c("xmin", "xmax", "text", "annotation_num")]
   } else {
     # A point interval with no points should be represented in the results.
     df <- data.frame(
