@@ -46,43 +46,14 @@ read_textgrid_lines <- function(lines, file = NULL) {
 }
 
 
-#' Locate the path of an example textgrid file
-#'
-#' Locate the path of an example textgrid file
-#'
-#' @param which index of the textgrid to load
-#' @return Path of `"Mary_John_bell.TextGrid"` bundled with the `readtextgrid`
-#'   package.
-#'
-#' @details This function is a wrapper over [`system.file()`]  to locate the
-#' paths to bundled textgrids. These files are used to test or demonstrate
-#' functionality of the package.
-#'
-#' Two files are included:
-#'
-#' 1. `"Mary_John_bell.TextGrid"` - the default TextGrid created by Praat's
-#'    Create TextGrid command. This file is saved as UTF-8 encoding.
-#' 2. `"utf_16_be.TextGrid"` - a TextGrid with some IPA characters entered using
-#'    Praat's IPA character selector. This file is saved with UTF-16 encoding.
-#' 3. `"nested-intervals.TextGrid"` - A textgrid containing an `"utterance"`
-#'    tier, a `"words"` tier, and a `"phones"` tier. This file is typical of
-#'    forced alignment textgrids where utterances contain words which contain
-#'    speech segments. In this case, alignment was made by hand so that word
-#'    and phone boundaries do not correspond exactly.
-#'
-#' @export
-example_textgrid <- function(which = 1) {
-  choices <- c(
-    "Mary_John_bell.TextGrid",
-    "utf_16_be.TextGrid",
-    "nested-intervals.TextGrid"
-  )
-
-  system.file(choices[which], package = "readtextgrid")
-}
-
 #' @import rlang
 parse_textgrid_lines <- function(lines) {
+
+  # lines <- readr::read_lines(testthat::test_path("test-data/Mary_John_bell.TextGrid"))
+  # lines <- readr::read_lines(testthat::test_path("test-data/nested-intervals.TextGrid"))
+  # lines <- readr::read_lines(testthat::test_path("test-data/points.TextGrid"))
+  # lines <- readr::read_lines(testthat::test_path("test-data/hard-to-parse.TextGrid"))
+
   tg_characters <- lines |>
     stringr::str_squish() |>
     # collapse into one string
@@ -93,95 +64,109 @@ parse_textgrid_lines <- function(lines) {
     stringr::str_split("") |>
     unlist()
 
-  tg_list <- tokenize_textgrid_chars(tg_characters)
-  tier_idces <- validate_tg_list(tg_list)
-  tier_types <- tg_list[tier_idces] |> unlist()
+  tg_tokens <- tokenize_textgrid_chars(tg_characters)
+  tier_indices <- find_tier_starts(tg_tokens)
+  tier_types <- tg_tokens[tier_indices] |> unlist()
 
-  tier_df <- tibble::tibble(
+  tier_info_df <- tibble::tibble(
+    tier_num = seq_along(tier_types),
     tier_type = tier_types,
-    tier_start = tier_idces,
-    tier_end = dplyr::lead(
-      tier_idces - 1,
-      default = length(tg_list)
-    )
-  ) |>
-    dplyr::mutate(
-      tier_num = dplyr::row_number(),
-      .before = 1
-    )
-
-  tier_df |>
-    tidyr::nest(.by = "tier_num", .key = "data") |>
-    dplyr::mutate(
-      marks = purrr::map(
-        !!sym("data"),
-        ~parse_tier(.x, tg_list)
-      )
-    ) |>
-    tidyr::unnest(!!sym("marks")) |>
-    dplyr::select(-!!sym("data"))
-}
-
-parse_tier <- function(tier_df, tg_list) {
-  tier_list <- tg_list[tier_df$tier_start:tier_df$tier_end]
-  outer_df <- tibble::tibble(
-    tier_name = tier_list[[2]],
-    tier_type = tier_list[[1]],
-    tier_xmin = tier_list[[3]],
-    tier_xmax = tier_list[[4]]
+    tier_start = tier_indices,
+    tier_end = dplyr::lead(tier_indices - 1, default = length(tg_tokens))
   )
 
-  if (tier_df$tier_end - tier_df$tier_start < 5) {
+
+  data <- tier_info_df |>
+    split(~tier_num) |>
+    lapply(parse_tier, tg_tokens = tg_tokens) |>
+    dplyr::bind_rows()
+
+  data[["tier_xmin"]] <- as.numeric(data[["tier_xmin"]])
+  data[["tier_xmax"]] <- as.numeric(data[["tier_xmax"]])
+  data[["xmin"]] <- as.numeric(data[["xmin"]])
+  data[["xmax"]] <- as.numeric(data[["xmax"]])
+  data[["tier_num"]] <- as.integer(data[["tier_num"]])
+  data[["annotation_num"]] <- as.integer(data[["annotation_num"]])
+  data[["text"]] <- as.character(data[["text"]])
+  data
+}
+
+
+parse_tier <- function(tier_info, tg_tokens) {
+  tier_tokens <- tg_tokens[tier_info$tier_start:tier_info$tier_end]
+
+  # An empty Interval tier always has at least one interval. So it has that
+  # at least 8 elements:
+  # - (5) class, tier name, tier xmin, tier xmax, num intervals,
+  # - (3) interval xmin, interval xmax, interval text
+  # An empty Point tier has at least 5 elements
+  # - (5) class, tier name, tier xmin, tier xmax, num points
+  LENGTH_EMPTY_POINT_INTERVAL <- 5
+
+  if (length(tier_tokens) == LENGTH_EMPTY_POINT_INTERVAL) {
+    outer_df <- tibble::tibble(
+      tier_num = tier_info[["tier_num"]],
+      tier_name = tier_tokens[[2]],
+      tier_type = tier_tokens[[1]],
+      tier_xmin = tier_tokens[[3]],
+      tier_xmax = tier_tokens[[4]],
+      xmin = NA_real_,
+      xmax = NA_real_,
+      text = NA_character_,
+      annotation_num = NA_integer_
+    )
     return(outer_df)
   }
 
-  if (tier_df$tier_type == "IntervalTier") {
-    marks_df <- make_intervals(tier_df, tg_list)
+  if (tier_info$tier_type == "IntervalTier") {
+    marks_df <- make_intervals(tier_tokens, tg_tokens)
   }
 
-  if (tier_df$tier_type == "TextTier") {
-    marks_df <- make_points(tier_df, tg_list)
+  if (tier_info$tier_type == "TextTier") {
+    marks_df <- make_points(tier_tokens, tg_tokens)
   }
 
-  outer_df |>
-    dplyr::cross_join(marks_df)
+  marks_df[["tier_num"]] <- tier_info[["tier_num"]]
+  marks_df
 }
 
-make_intervals <- function(tier_df, tg_list) {
-  start_idx <- tier_df$tier_start + 5
-  end_idx <- tier_df$tier_end - 2
-  purrr::map(
-    seq(start_idx, end_idx, by = 3),
-    \(idx){
-      tibble::tibble(
-        xmin = tg_list[[idx]],
-        xmax = tg_list[[idx + 1]],
-        text = tg_list[[idx + 2]]
-      )
-    }
-  ) |>
-    purrr::list_rbind() |>
-    dplyr::mutate(
-      annotation_num = dplyr::row_number()
-    )
+
+
+
+make_intervals <- function(tier_tokens, tg_tokens) {
+  # Skip first five elements (tier-level data)
+  interval_data <- tier_tokens[-(1:5)]
+  start_idx <- seq(1, length(interval_data) - 2, by = 3)
+
+  tibble::tibble(
+    tier_num = NA_integer_,
+    tier_name = tier_tokens[[2]],
+    tier_type = tier_tokens[[1]],
+    tier_xmin = tier_tokens[[3]],
+    tier_xmax = tier_tokens[[4]],
+    xmin = interval_data[start_idx] |> unlist(),
+    xmax = interval_data[start_idx + 1] |> unlist(),
+    text = interval_data[start_idx + 2] |> unlist(),
+    annotation_num = seq_along(start_idx)
+  )
 }
 
-make_points <- function(tier_df, tg_list) {
-  start_idx <- tier_df$tier_start + 5
-  end_idx <- tier_df$tier_end - 1
-  purrr::map(
-    seq(start_idx, end_idx, by = 2),
-    \(idx){
-      tibble::tibble(
-        xmin = tg_list[[idx]],
-        text = tg_list[[idx + 1]]
-      )
-    }
-  ) |>
-    purrr::list_rbind() |>
-    dplyr::mutate(
-      annotation_num = dplyr::row_number()
-    )
+make_points <- function(tier_tokens, tg_tokens) {
+  # Skip first five elements (tier-level data)
+  point_data <- tier_tokens[-(1:5)]
+  start_idx <- seq(1, length(point_data) - 1, by = 2)
+
+  tibble::tibble(
+    tier_num = NA_integer_,
+    tier_name = tier_tokens[[2]],
+    tier_type = tier_tokens[[1]],
+    tier_xmin = tier_tokens[[3]],
+    tier_xmax = tier_tokens[[4]],
+    xmin = point_data[start_idx] |> unlist(),
+    xmax = point_data[start_idx] |> unlist(),
+    text = point_data[start_idx + 1] |> unlist(),
+    annotation_num = seq_along(start_idx)
+  )
 }
 
 #' @import rlang
@@ -281,45 +266,84 @@ tg_parse_convert_value <- function(x) {
 
 
 #' @import rlang
-validate_tg_list <- function(tg_list, call = caller_env()) {
-  tier_idces <- tg_list |>
-    lapply(stringr::str_detect, "Tier") |>
-    unlist() |>
-    which()
+find_tier_starts <- function(tg_tokens) {
+  # TODO:
+  # TextGrid_checkInvariants_e() in Praat source provides strong and weak
+  # invariants
+  # https://github.com/praat/praat.github.io/blob/master/fon/TextGrid.cpp#L1402
 
-  if (min(tier_idces) != 6) {
-    cli::cli_abort("TextGrid appears misformatted", call = call)
-  }
 
-  tier_types <- tg_list[tier_idces] |>
-    unlist() |>
-    stringr::str_remove("Tier")
+  # A textgrid interval might legitimately have the text "Tier" in it so
+  # don't use regexes. Just consume tokens.
+  num_tiers <- tg_tokens[[5]]
+  tier_starts <- integer(num_tiers)
+  tier_starts[1] <- 6L
 
-  tier_idces2 <- c(tier_idces, length(tg_list) + 1)
-  tier_length <- diff(tier_idces2) - 5
+  for (tier_i in seq_len(num_tiers)) {
+    if (tier_i == num_tiers) break
 
-  correct_len <- purrr::map2(
-    tier_types,
-    tier_length,
-    \(ttype, tlen){
-      if (ttype == "Interval") {
-        return(tlen %% 3 == 0)
-      }
-      if (ttype == "Text") {
-        return(tlen %% 2 == 0)
-      }
+    type <- tg_tokens[[tier_starts[tier_i]]]
+    size <- tg_tokens[[tier_starts[tier_i] + 4]]
+    if (type == "IntervalTier") {
+      tier_end <- tier_starts[tier_i] + 4 + 3 * size
+      tier_starts[tier_i + 1] <- tier_end + 1
+    } else {
+      # 2 lines per point but they can have size 0
+      tier_end <- tier_starts[tier_i] + 4 + 2 * size
+      tier_starts[tier_i + 1] <- tier_end + 1
     }
-  ) |>
-    unlist()
-
-  if (!all(correct_len)) {
-    cli::cli_abort("TextGrid appears misformatted", call = call)
   }
 
-  tier_idces
+  tier_types <- tg_tokens[tier_starts] |> unlist()
+  valid_tier_types <- tier_types |>
+    is.element(c("IntervalTier", "TextTier")) |>
+    all()
+
+  if (!valid_tier_types) {
+    rlang::abort("TextGrid appears misformatted")
+  }
+
+  tier_starts
 }
 
 
 str_detect_any <- function(xs, pattern) {
   any(stringr::str_detect(xs, pattern))
+}
+
+
+
+#' Locate the path of an example textgrid file
+#'
+#' Locate the path of an example textgrid file
+#'
+#' @param which index of the textgrid to load
+#' @return Path of `"Mary_John_bell.TextGrid"` bundled with the `readtextgrid`
+#'   package.
+#'
+#' @details This function is a wrapper over [`system.file()`]  to locate the
+#' paths to bundled textgrids. These files are used to test or demonstrate
+#' functionality of the package.
+#'
+#' Two files are included:
+#'
+#' 1. `"Mary_John_bell.TextGrid"` - the default TextGrid created by Praat's
+#'    Create TextGrid command. This file is saved as UTF-8 encoding.
+#' 2. `"utf_16_be.TextGrid"` - a TextGrid with some IPA characters entered using
+#'    Praat's IPA character selector. This file is saved with UTF-16 encoding.
+#' 3. `"nested-intervals.TextGrid"` - A textgrid containing an `"utterance"`
+#'    tier, a `"words"` tier, and a `"phones"` tier. This file is typical of
+#'    forced alignment textgrids where utterances contain words which contain
+#'    speech segments. In this case, alignment was made by hand so that word
+#'    and phone boundaries do not correspond exactly.
+#'
+#' @export
+example_textgrid <- function(which = 1) {
+  choices <- c(
+    "Mary_John_bell.TextGrid",
+    "utf_16_be.TextGrid",
+    "nested-intervals.TextGrid"
+  )
+
+  system.file(choices[which], package = "readtextgrid")
 }
