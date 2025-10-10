@@ -26,7 +26,11 @@
   lines |>
     .v1_parse_textgrid_lines() |>
     tibble::as_tibble() |>
-    tibble::add_column(file = file, .before = 1)
+    tibble::add_column(file = file, .before = 1) |>
+    dplyr::mutate(
+      tier_name = .v1_str_unescape_quote(.data$tier_name),
+      text = .v1_str_unescape_quote(.data$text)
+    )
 }
 
 .v1_parse_textgrid_lines <- function(lines) {
@@ -78,9 +82,26 @@
 .v1_parse_interval_tier <- function(lines_interval_tier) {
   lines_interval_tier |>
     .v1_slice_sections("intervals") |>
+    purrr::map(.v1_combine_text_lines) |>
     purrr::map(.v1_get_field_list, fields = c("xmin", "xmax", "text")) |>
     purrr::imap(.v1_add_annotation_num) |>
     dplyr::bind_rows()
+}
+
+# If the text field spans multiple lines, combine them into one string
+.v1_combine_text_lines <- function(lines_annotation) {
+  loc_mark_start <- lines_annotation |> .v1_which_field("mark")
+  loc_text_start <- lines_annotation |> .v1_which_field("text")
+  loc_text_start <- c(loc_text_start, loc_mark_start)
+
+  if (loc_text_start != length(lines_annotation)) {
+    loc_text_rest <- seq(loc_text_start + 1, length(lines_annotation), by = 1)
+    loc_text_full <- c(loc_text_start, loc_text_rest)
+    lines_annotation[loc_text_start] <- lines_annotation[loc_text_full] |>
+      paste0(collapse = "\n")
+    lines_annotation <- lines_annotation[-loc_text_rest]
+  }
+  lines_annotation
 }
 
 .v1_parse_point_tier <- function(lines_point_tier) {
@@ -128,7 +149,9 @@
 
 # Find first match of "[field] = [value]", returning [value]
 .v1_get_field <- function(lines, field) {
-  re <- paste0("(?<=", field, " = ).+")
+  re <- paste0("(?<=", field, " = ).+") |>
+    # "text = .*" needs to capture newlines too
+    stringr::regex(dotall = TRUE)
 
   lines |>
     stringr::str_extract(re) |>
@@ -136,6 +159,13 @@
     utils::head(1) |>
     stringr::str_trim() |>
     .v1_str_unquote()
+}
+
+# Find first match of "[field] = [value]", returning [value]
+.v1_which_field <- function(lines, field) {
+  re <- paste0("(?<=", field, " = ).+")
+  lines |>
+    stringr::str_which(re)
 }
 
 # Find first match of "[field] = [value]", returning [value]
@@ -149,6 +179,10 @@
 
 .v1_str_unquote <- function(xs) {
   gsub("^\"|\"$", "", xs)
+}
+
+.v1_str_unescape_quote <- function(xs) {
+  gsub('""', '"', xs, perl = TRUE)
 }
 
 .v1_str_detect_any <- function(xs, pattern) {
