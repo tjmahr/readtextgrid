@@ -15,20 +15,19 @@ Description: 'Praat' <https://www.fon.hum.uva.nl/praat/> is a widely
     files into R.
 License: GPL-3
 Encoding: UTF-8
-Depends: R (>= 4.1.0)
+Depends: R (>= 4.3.0)
 Suggests: 
     testthat (>= 2.1.0)
 RoxygenNote: 7.3.3
 Imports: 
+    utils,
     stats,
     tibble,
     purrr,
     readr,
     stringr,
     dplyr,
-    rlang,
-    cli,
-    tidyr
+    rlang
 URL: https://github.com/tjmahr/readtextgrid
 BugReports: https://github.com/tjmahr/readtextgrid/issues
 Roxygen: list(markdown = TRUE)

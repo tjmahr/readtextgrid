@@ -12,7 +12,26 @@
 #'   `read_textgrid()`, the default is the base filename of the input file. For
 #'   `read_textgrid_lines()`, the default is `NA`.
 #' @return a tibble with one row per textgrid annotation
+#'
+#' @details The `legacy_read_textgrid` functions are the original textgrid
+#'   parsers provided by the package. They assume that the TextGrid file is a
+#'   "long" format textgrid; this is the default format used by "Save a text
+#'   file..." in Praat.
+#'
+#'   The current `read_textgrid()` functions are more
+#'   flexible and can read in "short" format textgrids and textgrids with
+#'   comments.
+#'
+#'   See <https://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html>
+#'   for a description of the textgrid file format. Note that this package does
+#'   not strictly adhere to format as described in this document. For example,
+#'   the document says that numbers should be freestanding (surrounded by spaces
+#'   or string boundaries), but Praat.exe can handle malformed numbers like
+#'   `100ms`. Therefore, we tried to implement a parser that matched what Praat
+#'   actually handles.
+#'
 #' @export
+#' @order 1
 #' @examples
 #' tg <- system.file("Mary_John_bell.TextGrid", package = "readtextgrid")
 #' read_textgrid(tg)
@@ -32,6 +51,7 @@ read_textgrid <- function(path, file = NULL, encoding = NULL) {
 }
 
 #' @rdname read_textgrid
+#' @order 2
 #' @export
 read_textgrid_lines <- function(lines, file = NULL) {
   if (is.null(file)) {
@@ -251,7 +271,7 @@ tg_parse_is_number <- function(x) {
 }
 
 tg_parse_convert_value <- function(x) {
-  v <- type.convert(x, as.is = TRUE, tryLogical = FALSE)
+  v <- utils::type.convert(x, as.is = TRUE, tryLogical = FALSE)
   if (is.character(v)) {
     # unquote strings
     v <- substr(v, 2, nchar(v) - 1)

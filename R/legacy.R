@@ -1,6 +1,9 @@
 # Old version of parsing code
 
 
+#' @export
+#' @rdname read_textgrid
+#' @order 3
 legacy_read_textgrid <- function(path, file = NULL, encoding = NULL) {
   if (is.null(file)) {
     file <- basename(path)
@@ -16,6 +19,9 @@ legacy_read_textgrid <- function(path, file = NULL, encoding = NULL) {
     legacy_read_textgrid_lines(file = file)
 }
 
+#' @export
+#' @rdname read_textgrid
+#' @order 4
 legacy_read_textgrid_lines <- function(lines, file = NULL) {
   if (is.null(file)) {
     file <- NA_character_
@@ -23,14 +29,14 @@ legacy_read_textgrid_lines <- function(lines, file = NULL) {
 
   stopifnot(str_detect_any(lines, "ooTextFile"))
 
-  lines |>
+  df <- lines |>
     .v1_parse_textgrid_lines() |>
     tibble::as_tibble() |>
-    tibble::add_column(file = file, .before = 1) |>
-    dplyr::mutate(
-      tier_name = .v1_str_unescape_quote(.data$tier_name),
-      text = .v1_str_unescape_quote(.data$text)
-    )
+    tibble::add_column(file = file, .before = 1)
+
+  df[["tier_name"]] <- .v1_str_unescape_quote(df[["tier_name"]])
+  df[["text"]] <- .v1_str_unescape_quote(df[["text"]])
+  df
 }
 
 .v1_parse_textgrid_lines <- function(lines) {

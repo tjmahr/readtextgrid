@@ -73,7 +73,6 @@ test_that("can read in hard-to-parse file", {
   # Validate against v1
   tg3 <- legacy_read_textgrid(path2)
   tg3$file <- "hard-to-parse.TextGrid"
-  waldo::compare(tg2, tg3)
   expect_equal(tg2, tg3)
 })
 
