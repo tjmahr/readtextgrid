@@ -1,0 +1,57 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 2.3 
+tiers? <exists> 
+size = 4 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "! Fake Comment" 
+        xmin = 0 
+        xmax = 2.3 
+        intervals: size = 3 
+        intervals [1]:
+            xmin = 0 
+            xmax = 1 
+            text = "" 
+        intervals [2]:
+            xmin = 1 
+            xmax = 2 
+            text = """""" 
+        intervals [3]:
+            xmin = 2 
+            xmax = 2.3 
+            text = "Not a ! Comment" 
+    item [2]:
+        class = "IntervalTier" 
+        name = "Embedded ""String"" here" 
+        xmin = -0.5 
+        xmax = 2.3 
+        intervals: size = 1 
+        intervals [1]:
+            xmin = -0.1 
+            xmax = 2.8 
+            text = "this string
+has line breaks in it
+and a ! fake comment
+" 
+    item [3]:
+        class = "TextTier" 
+        name = "point tier 1" 
+        xmin = 0 
+        xmax = 2.3 
+        points: size = 2 
+        points [1]:
+            number = 0.1 
+            mark = "point label" 
+        points [2]:
+            number = 0.8000000000000003 
+            mark = "deliberate    extra spaces" 
+    item [4]:
+        class = "TextTier" 
+        name = "TextTier" 
+        xmin = 0 
+        xmax = 2.3 
+        points: size = 0 

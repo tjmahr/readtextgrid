@@ -2,12 +2,20 @@ test_that("reading in point tiers", {
   path <- testthat::test_path("test-data/points.TextGrid")
   tg <- read_textgrid(path)
   expect_equal(nrow(tg), 3)
+
+  # Validate against v1
+  tg2 <- legacy_read_textgrid(path)
+  expect_equal(tg, tg2)
 })
 
 test_that("reading in empty point tiers", {
   path <- testthat::test_path("test-data/Mary_John_bell.TextGrid")
   tg <- read_textgrid(path)
   expect_equal(nrow(tg), 3)
+
+  # Validate against v1
+  tg2 <- legacy_read_textgrid(path)
+  expect_equal(tg, tg2)
 })
 
 test_that("result is a tibble", {
@@ -20,7 +28,55 @@ test_that("example_textgrid works", {
   path <- example_textgrid()
   tg <- read_textgrid(path)
   expect_equal(nrow(tg), 3)
+
+  # Validate against v1
+  tg2 <- legacy_read_textgrid(path)
+  expect_equal(tg, tg2)
 })
+
+test_that("comment textgrid works", {
+  path <- testthat::test_path("test-data/comment.TextGrid")
+  tg <- read_textgrid(path)
+  testthat::expect_s3_class(tg, "tbl")
+  expect_equal(nrow(tg), 3)
+})
+
+test_that("short format textgrid works", {
+  path <- testthat::test_path("test-data/short.TextGrid")
+  tg <- read_textgrid(path)
+  testthat::expect_s3_class(tg, "tbl")
+  expect_equal(nrow(tg), 3)
+})
+
+test_that("escaped quotes (\"\") are converted to single (\")", {
+  path <- testthat::test_path("test-data/quoted.TextGrid")
+  tg <- read_textgrid(path)
+  has_double <- any(grepl('""', tg$text))
+  has_single <- any(grepl('"', tg$text))
+  expect_false(has_double)
+  expect_true(has_single)
+
+  # Validate against v1
+  tg2 <- legacy_read_textgrid(path)
+  expect_equal(tg, tg2)
+})
+
+test_that("can read in hard-to-parse file", {
+  path <- testthat::test_path("test-data/hard-to-parse.TextGrid")
+  tg <- read_textgrid(path)
+  # a version of the TextGrid opened and saved by Praat to a long TextGrid
+  path2 <- testthat::test_path("test-data/hard-to-parse-normalized.TextGrid")
+  tg2 <- read_textgrid(path2)
+  tg2$file <- "hard-to-parse.TextGrid"
+  expect_equal(tg, tg2)
+
+  # Validate against v1
+  tg3 <- legacy_read_textgrid(path2)
+  tg3$file <- "hard-to-parse.TextGrid"
+  expect_equal(tg2, tg3)
+})
+
+
 
 test_that("encoding support", {
   example_textgrid(1) |>

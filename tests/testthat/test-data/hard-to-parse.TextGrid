@@ -1,0 +1,44 @@
+"ooTextFile"
+"TextGrid"
+! A deliberate comment starts with a bang and ends on a new line
+0  2.3  ! Here is a normal comment
+<exists> ! This comment has a stray number 1
+
+! Extra unquoted text is also a comment like the word "tiers" below
+4 tiers         ! This comment has a stray quote "
+"IntervalTier"  "! Fake Comment"
+    0              2.3  ! time domain of tier 1
+3 interval coming
+0  1  ""  ! interval 1 on tier 1
+1  2  """"""  ! interval 2 on tier 1
+2  2.3  "Not a ! Comment"  ! interval 3 on tier 1
+"IntervalTier"  "Embedded ""String"" here"  ! type and name of tier 2
+I guess some negative numbers are fine and make it into Praat
+-0.5s  2.3
+1 interval coming
+-0.1  2.8s  "this string
+has line breaks in it
+and a ! fake comment
+"
+! testing comments that touch strings and numbers
+! 1. "string"! throws an error in Praat so don't test that
+"TextTier"  "point tier 1"
+! 2. [NUMBER]!comment is handled fine by Praat
+0.  2.3!touching a number
+okay this is weird it won't see letternumber like this10
+but it doesn't care about 2this
+0.1
+"point label"
+
+! Finally include a bracketed number
+points [3]:
+    number = 0.8000000000000003
+    mark = "deliberate    extra spaces"
+
+"TextTier"  "TextTier" 0.  2.3
+and now here is the weird part -10 ! points gets turned to 0
+
+
+! and now here is another weird part. this doesn't get read because we said
+! there are only 4 tiers
+"TextTier"  "point tier 3" 0.  2.3 0
