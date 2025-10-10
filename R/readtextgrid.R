@@ -226,7 +226,9 @@ tokenize_textgrid_chars <- function(all_char) {
       # Collect only numbers and strings
       if (tg_parse_is_number(total_value)) {
         # Keep only the numeric part.
-        total_value <- stringr::str_extract(total_value, "^-?\\d+(\\.\\d*)?")
+        total_value <- total_value |>
+          stringr::str_extract("^-?\\d+(\\.\\d*)?") |>
+          as.numeric()
         values <- c(values, total_value)
       } else if (is_string) {
         values <- c(values, total_value)
@@ -271,14 +273,13 @@ tg_parse_is_number <- function(x) {
 }
 
 tg_parse_convert_value <- function(x) {
-  v <- utils::type.convert(x, as.is = TRUE, tryLogical = FALSE)
-  if (is.character(v)) {
+  if (is.character(x)) {
     # unquote strings
-    v <- substr(v, 2, nchar(v) - 1)
+    x <- substr(x, 2, nchar(x) - 1)
     # undo "" escapement
-    v <- stringr::str_replace_all(v, "\"\"", "\"")
+    x <- stringr::str_replace_all(x, "\"\"", "\"")
   }
-  v
+  x
 }
 
 
