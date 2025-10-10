@@ -4,7 +4,7 @@ test_that("reading in point tiers", {
   expect_equal(nrow(tg), 3)
 
   # Validate against v1
-  tg2 <- .v1_read_textgrid(path)
+  tg2 <- legacy_read_textgrid(path)
   expect_equal(tg, tg2)
 })
 
@@ -14,7 +14,7 @@ test_that("reading in empty point tiers", {
   expect_equal(nrow(tg), 3)
 
   # Validate against v1
-  tg2 <- .v1_read_textgrid(path)
+  tg2 <- legacy_read_textgrid(path)
   expect_equal(tg, tg2)
 })
 
@@ -30,7 +30,7 @@ test_that("example_textgrid works", {
   expect_equal(nrow(tg), 3)
 
   # Validate against v1
-  tg2 <- .v1_read_textgrid(path)
+  tg2 <- legacy_read_textgrid(path)
   expect_equal(tg, tg2)
 })
 
@@ -57,7 +57,7 @@ test_that("escaped quotes (\"\") are converted to single (\")", {
   expect_true(has_single)
 
   # Validate against v1
-  tg2 <- .v1_read_textgrid(path)
+  tg2 <- legacy_read_textgrid(path)
   expect_equal(tg, tg2)
 })
 
@@ -71,8 +71,9 @@ test_that("can read in hard-to-parse file", {
   expect_equal(tg, tg2)
 
   # Validate against v1
-  tg3 <- .v1_read_textgrid(path2)
+  tg3 <- legacy_read_textgrid(path2)
   tg3$file <- "hard-to-parse.TextGrid"
+  waldo::compare(tg2, tg3)
   expect_equal(tg2, tg3)
 })
 

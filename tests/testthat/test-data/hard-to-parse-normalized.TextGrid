@@ -48,10 +48,10 @@ and a ! fake comment
             mark = "point label" 
         points [2]:
             number = 0.8000000000000003 
-            mark = "point 3" 
+            mark = "deliberate    extra spaces" 
     item [4]:
         class = "TextTier" 
-        name = "point tier 2" 
+        name = "TextTier" 
         xmin = 0 
         xmax = 2.3 
         points: size = 0 

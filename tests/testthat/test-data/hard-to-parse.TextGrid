@@ -33,9 +33,9 @@ but it doesn't care about 2this
 ! Finally include a bracketed number
 points [3]:
     number = 0.8000000000000003
-    mark = "point 3"
+    mark = "deliberate    extra spaces"
 
-"TextTier"  "point tier 2" 0.  2.3
+"TextTier"  "TextTier" 0.  2.3
 and now here is the weird part -10 ! points gets turned to 0
 
 

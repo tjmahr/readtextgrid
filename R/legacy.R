@@ -1,7 +1,7 @@
 # Old version of parsing code
 
 
-.v1_read_textgrid <- function(path, file = NULL, encoding = NULL) {
+legacy_read_textgrid <- function(path, file = NULL, encoding = NULL) {
   if (is.null(file)) {
     file <- basename(path)
   }
@@ -13,10 +13,10 @@
 
   path |>
     readr::read_lines(locale = file_locale) |>
-    .v1_read_textgrid_lines(file = file)
+    legacy_read_textgrid_lines(file = file)
 }
 
-.v1_read_textgrid_lines <- function(lines, file = NULL) {
+legacy_read_textgrid_lines <- function(lines, file = NULL) {
   if (is.null(file)) {
     file <- NA_character_
   }
