@@ -46,16 +46,8 @@ read_textgrid_lines <- function(lines, file = NULL) {
 }
 
 
-#' @import rlang
 parse_textgrid_lines <- function(lines) {
-
-  # lines <- readr::read_lines(testthat::test_path("test-data/Mary_John_bell.TextGrid"))
-  # lines <- readr::read_lines(testthat::test_path("test-data/nested-intervals.TextGrid"))
-  # lines <- readr::read_lines(testthat::test_path("test-data/points.TextGrid"))
-  # lines <- readr::read_lines(testthat::test_path("test-data/hard-to-parse.TextGrid"))
-
   tg_characters <- lines |>
-    stringr::str_squish() |>
     # collapse into one string
     stringr::str_c(collapse = "\n") |>
     # concat one trailing space
@@ -130,8 +122,6 @@ parse_tier <- function(tier_info, tg_tokens) {
 }
 
 
-
-
 make_intervals <- function(tier_tokens, tg_tokens) {
   # Skip first five elements (tier-level data)
   interval_data <- tier_tokens[-(1:5)]
@@ -149,6 +139,7 @@ make_intervals <- function(tier_tokens, tg_tokens) {
     annotation_num = seq_along(start_idx)
   )
 }
+
 
 make_points <- function(tier_tokens, tg_tokens) {
   # Skip first five elements (tier-level data)
@@ -168,8 +159,9 @@ make_points <- function(tier_tokens, tg_tokens) {
   )
 }
 
+
 #' @import rlang
-tokenize_textgrid_chars <- function(all_char, call = caller_env()) {
+tokenize_textgrid_chars <- function(all_char) {
   # The parser rules here follow the textgrid specifications
   # <https://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html> EXCEPT
   # when they contradict the behavior of Praat.exe. For example, the specs says
@@ -179,19 +171,19 @@ tokenize_textgrid_chars <- function(all_char, call = caller_env()) {
   # gathers freestanding literals but only keeps ones that are strings or
   # start with a valid number (the non-numeric characters are lopped off.)
 
-  in_strong_comment <- FALSE         # comment mode: ! to new line \n
-  in_string <- FALSE                 # string mode: "Quote to quote"
-  in_escaped_quote <- FALSE          # escaped quote: "" inside of a string
+  in_strong_comment <- FALSE         # Comment mode: ! to new line \n
+  in_string <- FALSE                 # String mode: "Quote to quote"
+  in_escaped_quote <- FALSE          # Escaped quote: "" inside of a string
 
-  cur_value <- vector()             # Collects characters into values
-  values <- vector(mode = "list")   # Collects completed values
+  cur_value <- vector()              # Collects characters into values
+  values <- vector(mode = "list")    # Collects completed values
 
   for (i in seq_along(all_char)) {
     c <- all_char[i]
     c_is_whitespace <- c %in% c(" ", "\n")
     c_starts_string <- c == "\""
 
-    # Comments start with ! and end with \n. Skip characters.
+    # Comments start with ! and end with \n. Skip characters in this mode.
     if (!in_string & c == "!") {
       in_strong_comment <- TRUE
       next
@@ -209,6 +201,7 @@ tokenize_textgrid_chars <- function(all_char, call = caller_env()) {
       # Collect only numbers and strings
       total_value <- stringr::str_c(cur_value, collapse = "")
       if (tg_parse_is_number(total_value)) {
+        # Keep only the numeric part.
         total_value <- stringr::str_extract(total_value, "^-?\\d+(\\.\\d*)?")
         values <- c(values, total_value)
       } else if (tg_parse_is_string(total_value)) {
@@ -225,7 +218,7 @@ tokenize_textgrid_chars <- function(all_char, call = caller_env()) {
       next
     }
 
-    # Start or close string mode if I see "
+    # Start or close string mode if we see "
     if (c_starts_string) {
       # Check for "" escapes
       peek_c <- all_char[i + 1]
@@ -241,13 +234,18 @@ tokenize_textgrid_chars <- function(all_char, call = caller_env()) {
 
   values |>
     lapply(tg_parse_convert_value)
-
 }
 
+# A string token starts and ends with a " character
 tg_parse_is_string <- function(x) {
   substr(x, 1, 1) == "\"" && substr(x, nchar(x), nchar(x)) == "\""
 }
 
+# A numeric token is:
+# string start
+# (optional minus sign)
+# digit(s)
+# (optional decimal point and digit(s))
 tg_parse_is_number <- function(x) {
   stringr::str_detect(x, "^-?\\d+(\\.\\d*)?")
 }
@@ -264,7 +262,6 @@ tg_parse_convert_value <- function(x) {
 }
 
 
-#' @import rlang
 find_tier_boundaries <- function(tg_tokens) {
   # TODO:
   # TextGrid_checkInvariants_e() in Praat source provides strong and weak
@@ -314,7 +311,6 @@ find_tier_boundaries <- function(tg_tokens) {
 str_detect_any <- function(xs, pattern) {
   any(stringr::str_detect(xs, pattern))
 }
-
 
 
 #' Locate the path of an example textgrid file
