@@ -6,16 +6,24 @@
 #include <R_ext/Visibility.h>
 
 // code.cpp
-list tg_scan_tokens_cpp(std::string src);
-extern "C" SEXP _readtextgrid_tg_scan_tokens_cpp(SEXP src) {
+list cpp_tg_scan_tokens(std::string src);
+extern "C" SEXP _readtextgrid_cpp_tg_scan_tokens(SEXP src) {
   BEGIN_CPP11
-    return cpp11::as_sexp(tg_scan_tokens_cpp(cpp11::as_cpp<cpp11::decay_t<std::string>>(src)));
+    return cpp11::as_sexp(cpp_tg_scan_tokens(cpp11::as_cpp<cpp11::decay_t<std::string>>(src)));
+  END_CPP11
+}
+// code.cpp
+list cpp_parse_praat_numbers(strings x);
+extern "C" SEXP _readtextgrid_cpp_parse_praat_numbers(SEXP x) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cpp_parse_praat_numbers(cpp11::as_cpp<cpp11::decay_t<strings>>(x)));
   END_CPP11
 }
 
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
-    {"_readtextgrid_tg_scan_tokens_cpp", (DL_FUNC) &_readtextgrid_tg_scan_tokens_cpp, 1},
+    {"_readtextgrid_cpp_parse_praat_numbers", (DL_FUNC) &_readtextgrid_cpp_parse_praat_numbers, 1},
+    {"_readtextgrid_cpp_tg_scan_tokens",      (DL_FUNC) &_readtextgrid_cpp_tg_scan_tokens,      1},
     {NULL, NULL, 0}
 };
 }

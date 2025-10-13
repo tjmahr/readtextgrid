@@ -383,7 +383,8 @@ results. We also benchmark purrr’s `in_parallel()` function which uses
 mirai for its parallelism.
 
 ``` r
-paths_bench <- sample(paths, 100, replace = TRUE)
+paths_bench <- withr::with_seed(1, sample(paths, 100, replace = TRUE))
+
 mirai::daemons(4)
 bench::mark(
   lapply_guess = lapply(paths_bench, read_textgrid),
@@ -405,12 +406,12 @@ bench::mark(
 #> # A tibble: 6 × 6
 #>   expression        min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr>   <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 lapply_guess    1.19s    1.19s     0.840   13.49MB     5.88
-#> 2 lapply_set   939.53ms 939.53ms     1.06     5.59MB     7.45
-#> 3 future_guess 409.15ms 425.05ms     2.35   625.76KB     1.18
-#> 4 future_set    359.2ms 366.35ms     2.73   625.76KB     2.73
-#> 5 mirai_guess  326.94ms 333.22ms     3.00     1.47MB     0   
-#> 6 mirai_set    267.67ms 271.77ms     3.68   1005.1KB     0
+#> 1 lapply_guess    1.28s    1.28s     0.782    13.5MB     5.48
+#> 2 lapply_set      1.06s    1.06s     0.947     5.6MB     6.63
+#> 3 future_guess  468.5ms 475.71ms     2.10   627.32KB     1.05
+#> 4 future_set   385.12ms 400.02ms     2.50   627.32KB     2.50
+#> 5 mirai_guess  364.27ms 366.65ms     2.73     1.47MB     0   
+#> 6 mirai_set     309.6ms 327.02ms     3.06  1006.66KB     0
 
 mirai::daemons(0)
 ```
@@ -427,7 +428,8 @@ functions. The new parser, although it scans the textgrid file
 character-by-character, is much faster.
 
 ``` r
-paths_bench <- sample(paths, 10, replace = TRUE)
+paths_bench <- withr::with_seed(2, sample(paths, 10, replace = TRUE))
+
 bench::mark(
   current = lapply(paths_bench, read_textgrid),
   legacy = lapply(paths_bench, legacy_read_textgrid),
@@ -439,8 +441,8 @@ bench::mark(
 #> # A tibble: 2 × 6
 #>   expression      min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 current       113ms    117ms      8.40    1.34MB     5.04
-#> 2 legacy        343ms    348ms      2.87   20.45MB     6.31
+#> 1 current       129ms    138ms      7.34    1.33MB     4.40
+#> 2 legacy        381ms    388ms      2.54   19.54MB     5.08
 ```
 
 ### Helpful columns

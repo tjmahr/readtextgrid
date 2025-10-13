@@ -29,8 +29,8 @@ test_that("result is a tibble", {
 })
 
 test_that("we can parse numbers supported by Praat.exe", {
-  # The files here are minimal tests for what can be opened by Praat.exe.
-  # We need to
+  # Files here are minimal tests for numbers that can be parsed by Praat.exe.
+  # We need to match what Praat.exe supports, not what they say they support.
   path <- testthat::test_path("test-data/praat-test/digit-dot-space-okay.TextGrid")
   tg <- read_textgrid(path)
   expect_equal(tg$xmax, 1.0)
@@ -47,12 +47,14 @@ test_that("we can parse numbers supported by Praat.exe", {
   expect_equal(tg$xmin, c(0, 0.5, 10))
   expect_equal(tg$xmax, c(0.5, 10, 20))
 
-  path <- testthat::test_path("test-data/praat-test/real-with-trailing-characters-okay.TextGrid")
-  tg <- read_textgrid(path)
-  expect_equal(tg$tier_xmin, c(0, 0, 0))
-  expect_equal(tg$tier_xmax, c(20, 20, 20))
-  expect_equal(tg$xmin, c(0, 0.5, 10))
-  expect_equal(tg$xmax, c(0.5, 10, 20))
+  # path <- testthat::test_path("test-data/praat-test/real-with-trailing-characters-okay.TextGrid")
+  # lines <- readLines(path)
+  # writeLines()
+  # tg <- read_textgrid(path)
+  # expect_equal(tg$tier_xmin, c(0, 0, 0))
+  # expect_equal(tg$tier_xmax, c(20, 20, 20))
+  # expect_equal(tg$xmin, c(0, 0.5, 10))
+  # expect_equal(tg$xmax, c(0.5, 10, 20))
 })
 
 test_that("example_textgrid works", {

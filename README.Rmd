@@ -250,7 +250,8 @@ results. We also benchmark purrr's `in_parallel()` function which uses
 mirai for its parallelism.
 
 ```{r}
-paths_bench <- sample(paths, 100, replace = TRUE)
+paths_bench <- withr::with_seed(1, sample(paths, 100, replace = TRUE))
+
 mirai::daemons(4)
 bench::mark(
   lapply_guess = lapply(paths_bench, read_textgrid),
@@ -282,7 +283,8 @@ parser is provided in the `legacy_` functions. The new parser, although it scans
 the textgrid file character-by-character, is much faster. 
 
 ```{r}
-paths_bench <- sample(paths, 10, replace = TRUE)
+paths_bench <- withr::with_seed(2, sample(paths, 10, replace = TRUE))
+
 bench::mark(
   current = lapply(paths_bench, read_textgrid),
   legacy = lapply(paths_bench, legacy_read_textgrid),

@@ -73,7 +73,7 @@ parse_textgrid_lines <- function(lines) {
     # concat one trailing space
     stringr::str_c(" ")
 
-  tg_tokens <- tokenize_textgrid_cpp(tg_text)
+  tg_tokens <- tokenize_textgrid(tg_text)
   tier_indices <- find_tier_boundaries(tg_tokens)
   tier_types <- tg_tokens[tier_indices$start] |> unlist()
 
@@ -176,48 +176,36 @@ make_points <- function(tier_tokens, tg_tokens) {
   )
 }
 
-tokenize_textgrid_cpp <- function(tg_text) {
-  .NUM_RE <- "^[+-]?\\d+(?:\\.\\d*)?(?:[eE][+-]?\\d+)?"
+tokenize_textgrid <- function(tg_text) {
+  # .NUM_RE <- "^[+-]?\\d+(?:\\.\\d*)?(?:[eE][+-]?\\d+)?"
 
-  # C++ scan: returns tokens, is_string
-  res <- tg_scan_tokens_cpp(tg_text)
+  # C++ scan for tokens
+  res <- cpp_tg_scan_tokens(tg_text)
   toks <- res$tokens
   is_string <- res$is_string
+  # Use R's number scanner to parse numbers
+  res2 <- withr::with_locale(
+    c(LC_NUMERIC = "C"),
+    cpp_parse_praat_numbers(res$tokens)
+  )
+  numbers <- res2$value
 
-  # Keep numbers or quoted strings
-  m  <- regexpr(.NUM_RE, toks, perl = TRUE)
-  ms <- as.integer(m)
-  ml <- attr(m, "match.length")
-  is_num <- ms > 0L
-
+  is_num <- !is.na(res2$value)
   keep <- is_num | is_string
   toks      <- toks[keep]
-  ms        <- ms[keep]
-  ml        <- ml[keep]
   is_string <- is_string[keep]
+  numbers   <- numbers[keep & is_num]
   is_num    <- is_num[keep]
 
   if (!any(keep)) return(list())
 
   out <- vector("list", length(toks))
+  out[is_num] <- numbers
 
-  if (any(is_num)) {
-    num_txt <- substring(
-      toks[is_num],
-      ms[is_num],
-      ms[is_num] + ml[is_num] - 1L
-    )
-    out[which(is_num)] <- as.numeric(num_txt)
-  }
-
-  if (any(is_string)) {
-    s <- toks[is_string]
-    # strip outer quotes
-    s <- substring(s, 2L, nchar(s) - 1L)
-    # unescape doubled quotes
-    s <- gsub('""', '"', s, fixed = TRUE)
-    out[is_string] <- s
-  }
+  s <- toks[is_string]
+  s <- substring(s, 2L, nchar(s) - 1L)
+  s <- gsub('""', '"', s, fixed = TRUE)
+  out[is_string] <- s
 
   out
 }
