@@ -20,11 +20,13 @@ Install from CRAN:
 install.packages("readtextgrid")
 ```
 
-Install the development version from Github:
+Install the development version from R-universe:
 
 ``` r
-install.packages("remotes")
-remotes::install_github("tjmahr/readtextgrid")
+install.packages(
+  "readtextgrid", 
+  repos = c("https://tjmahr.r-universe.dev", "https://cloud.r-project.org")
+)
 ```
 
 ## Basic example
@@ -47,7 +49,7 @@ tg <- example_textgrid()
 read_textgrid(path = tg)
 #> # A tibble: 3 × 10
 #>   file                    tier_num tier_name tier_type    tier_xmin tier_xmax
-#>   <chr>                      <dbl> <chr>     <chr>            <dbl>     <dbl>
+#>   <chr>                      <int> <chr>     <chr>            <dbl>     <dbl>
 #> 1 Mary_John_bell.TextGrid        1 Mary      IntervalTier         0         1
 #> 2 Mary_John_bell.TextGrid        2 John      IntervalTier         0         1
 #> 3 Mary_John_bell.TextGrid        3 bell      TextTier             0         1
@@ -129,7 +131,7 @@ library(purrr)
 map_dfr(paths, read_textgrid)
 #> # A tibble: 150 × 10
 #>    file           tier_num tier_name tier_type    tier_xmin tier_xmax  xmin
-#>    <chr>             <dbl> <chr>     <chr>            <dbl>     <dbl> <dbl>
+#>    <chr>             <int> <chr>     <chr>            <dbl>     <dbl> <dbl>
 #>  1 s2T01.TextGrid        1 words     IntervalTier         0      1.35 0    
 #>  2 s2T01.TextGrid        1 words     IntervalTier         0      1.35 0.297
 #>  3 s2T01.TextGrid        1 words     IntervalTier         0      1.35 0.522
@@ -176,7 +178,7 @@ data <- map2_dfr(paths, paths, read_textgrid) |>
 data
 #> # A tibble: 150 × 11
 #>    speaker    file           tier_num tier_name tier_type    tier_xmin tier_xmax
-#>    <chr>      <chr>             <dbl> <chr>     <chr>            <dbl>     <dbl>
+#>    <chr>      <chr>             <int> <chr>     <chr>            <dbl>     <dbl>
 #>  1 speaker001 s2T01.TextGrid        1 words     IntervalTier         0      1.35
 #>  2 speaker001 s2T01.TextGrid        1 words     IntervalTier         0      1.35
 #>  3 speaker001 s2T01.TextGrid        1 words     IntervalTier         0      1.35
@@ -232,7 +234,7 @@ data_nested
 tidyr::unnest(data_nested, "data")
 #> # A tibble: 150 × 11
 #>    speaker    file  tier_num tier_name tier_type tier_xmin tier_xmax  xmin  xmax
-#>    <chr>      <chr>    <dbl> <chr>     <chr>         <dbl>     <dbl> <dbl> <dbl>
+#>    <chr>      <chr>    <int> <chr>     <chr>         <dbl>     <dbl> <dbl> <dbl>
 #>  1 speaker001 s2T0…        1 words     Interval…         0      1.35 0     0.297
 #>  2 speaker001 s2T0…        1 words     Interval…         0      1.35 0.297 0.522
 #>  3 speaker001 s2T0…        1 words     Interval…         0      1.35 0.522 0.972
@@ -278,10 +280,10 @@ data_wide
 #>  9 speaker001 s2T01… ""         0.972      1.35       1.16                     4
 #> 10 speaker001 s2T02… ""         0          0.297      0.149                    1
 #> # ℹ 98 more rows
-#> # ℹ 11 more variables: words_tier_num <dbl>, words_tier_type <chr>,
+#> # ℹ 11 more variables: words_tier_num <int>, words_tier_type <chr>,
 #> #   tier_xmin <dbl>, tier_xmax <dbl>, phones <chr>, phones_xmin <dbl>,
 #> #   phones_xmax <dbl>, phones_xmid <dbl>, phones_annotation_num <int>,
-#> #   phones_tier_num <dbl>, phones_tier_type <chr>
+#> #   phones_tier_num <int>, phones_tier_type <chr>
 
 # more clearly,
 data_wide |> 
@@ -343,7 +345,7 @@ data |>
 #>  9 speaker001 s2T03… ""         0          0.369      0.184                    1
 #> 10 speaker001 s2T03… "hug"      0.369      0.657      0.513                    2
 #> # ℹ 32 more rows
-#> # ℹ 4 more variables: words_tier_num <dbl>, words_tier_type <chr>,
+#> # ℹ 4 more variables: words_tier_num <int>, words_tier_type <chr>,
 #> #   tier_xmin <dbl>, tier_xmax <dbl>
 ```
 
@@ -377,27 +379,68 @@ I found that **setting the encoding** could reduce benchmark times by
 3–4% compared to guessing the encoding.
 
 Here, we read 100 textgrids using different approaches to benchmark the
-results.
+results. We also benchmark purrr’s `in_parallel()` function which uses
+mirai for its parallelism.
 
 ``` r
 paths_bench <- sample(paths, 100, replace = TRUE)
+mirai::daemons(4)
 bench::mark(
   lapply_guess = lapply(paths_bench, read_textgrid),
   lapply_set = lapply(paths_bench, read_textgrid, encoding = "UTF-8"),
   future_guess = future_map(paths_bench, read_textgrid),
   future_set = future_map(paths_bench, read_textgrid, encoding = "UTF-8"), 
+  mirai_guess = purrr::map(
+    paths_bench, 
+    in_parallel(function(x) readtextgrid::read_textgrid(x))
+  ),
+  mirai_set = purrr::map(
+    paths_bench, 
+    in_parallel(function(x) readtextgrid::read_textgrid(x, encoding = "UTF-8"))
+  ),
+  check = TRUE
+)
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
+#> # A tibble: 6 × 6
+#>   expression        min   median `itr/sec` mem_alloc `gc/sec`
+#>   <bch:expr>   <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
+#> 1 lapply_guess    1.19s    1.19s     0.840   13.49MB     5.88
+#> 2 lapply_set   939.53ms 939.53ms     1.06     5.59MB     7.45
+#> 3 future_guess 409.15ms 425.05ms     2.35   625.76KB     1.18
+#> 4 future_set    359.2ms 366.35ms     2.73   625.76KB     2.73
+#> 5 mirai_guess  326.94ms 333.22ms     3.00     1.47MB     0   
+#> 6 mirai_set    267.67ms 271.77ms     3.68   1005.1KB     0
+
+mirai::daemons(0)
+```
+
+### Legacy behavior
+
+Version 2.0.0 of readtextgrid added a C++ based parser that can handle
+many more textgrid formats (such as short-format textgrids or textgrids
+with comments). The original version of the package assumed the textgrid
+was a long-format textgrid with helpful labels and annotations on the
+lines and used regular expressions to pull out these annotated value.
+The original version of the parser is provided in the `legacy_`
+functions. The new parser, although it scans the textgrid file
+character-by-character, is much faster.
+
+``` r
+paths_bench <- sample(paths, 10, replace = TRUE)
+bench::mark(
+  current = lapply(paths_bench, read_textgrid),
+  legacy = lapply(paths_bench, legacy_read_textgrid),
   min_iterations = 5,
   check = TRUE
 )
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
-#> # A tibble: 4 × 6
-#>   expression        min   median `itr/sec` mem_alloc `gc/sec`
-#>   <bch:expr>   <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 lapply_guess    3.96s    4.03s     0.245   175.5MB    1.67 
-#> 2 lapply_set      3.73s    3.78s     0.264  167.62MB    1.48 
-#> 3 future_guess    1.37s    1.39s     0.717    5.09MB    0.143
-#> 4 future_set      1.28s    1.33s     0.757    5.09MB    0
+#> # A tibble: 2 × 6
+#>   expression      min   median `itr/sec` mem_alloc `gc/sec`
+#>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
+#> 1 current       113ms    117ms      8.40    1.34MB     5.04
+#> 2 legacy        343ms    348ms      2.87   20.45MB     6.31
 ```
 
 ### Helpful columns
@@ -425,7 +468,7 @@ data |>
 #> Columns: 14
 #> $ speaker           <chr> "speaker001", "speaker001", "speaker001", "speaker00…
 #> $ file              <chr> "s2T01.TextGrid", "s2T01.TextGrid", "s2T01.TextGrid"…
-#> $ tier_num          <dbl> 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2…
+#> $ tier_num          <int> 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2…
 #> $ tier_name         <chr> "words", "words", "words", "words", "phones", "phone…
 #> $ tier_type         <chr> "IntervalTier", "IntervalTier", "IntervalTier", "Int…
 #> $ tier_xmin         <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
@@ -457,17 +500,6 @@ system2(
   wait = FALSE
 )
 ```
-
-## Limitations
-
-readtextgrid supports textgrids created by Praat by using
-`Save as text file...`. It uses a parsing strategy based on regular
-expressions targeting indentation patterns and text flags in the file
-format. The [formal specification of the textgrid
-format](https://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html),
-however, is much more flexible. As a result, not every textgrid that
-Praat can open—especially the minimal “short text” files—is compatible
-with this package.
 
 ## Acknowledgments
 

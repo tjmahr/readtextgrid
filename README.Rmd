@@ -30,11 +30,13 @@ Install from CRAN:
 install.packages("readtextgrid")
 ```
 
-Install the development version from Github:
+Install the development version from R-universe:
 
 ``` r
-install.packages("remotes")
-remotes::install_github("tjmahr/readtextgrid")
+install.packages(
+  "readtextgrid", 
+  repos = c("https://tjmahr.r-universe.dev", "https://cloud.r-project.org")
+)
 ```
 
 ## Basic example
@@ -244,15 +246,46 @@ that **setting the encoding** could reduce benchmark times by 3--4% compared
 to guessing the encoding.
 
 Here, we read 100 textgrids using different approaches to benchmark the 
-results.
+results. We also benchmark purrr's `in_parallel()` function which uses 
+mirai for its parallelism.
 
 ```{r}
 paths_bench <- sample(paths, 100, replace = TRUE)
+mirai::daemons(4)
 bench::mark(
   lapply_guess = lapply(paths_bench, read_textgrid),
   lapply_set = lapply(paths_bench, read_textgrid, encoding = "UTF-8"),
   future_guess = future_map(paths_bench, read_textgrid),
   future_set = future_map(paths_bench, read_textgrid, encoding = "UTF-8"), 
+  mirai_guess = purrr::map(
+    paths_bench, 
+    in_parallel(function(x) readtextgrid::read_textgrid(x))
+  ),
+  mirai_set = purrr::map(
+    paths_bench, 
+    in_parallel(function(x) readtextgrid::read_textgrid(x, encoding = "UTF-8"))
+  ),
+  check = TRUE
+)
+
+mirai::daemons(0)
+```
+
+### Legacy behavior
+
+Version 2.0.0 of readtextgrid added a C++ based parser that can handle many more
+textgrid formats (such as short-format textgrids or textgrids with comments).
+The original version of the package assumed the textgrid was a long-format
+textgrid with helpful labels and annotations on the lines and used regular
+expressions to pull out these annotated value. The original version of the
+parser is provided in the `legacy_` functions. The new parser, although it scans
+the textgrid file character-by-character, is much faster. 
+
+```{r}
+paths_bench <- sample(paths, 10, replace = TRUE)
+bench::mark(
+  current = lapply(paths_bench, read_textgrid),
+  legacy = lapply(paths_bench, legacy_read_textgrid),
   min_iterations = 5,
   check = TRUE
 )
