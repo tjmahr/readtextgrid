@@ -3,9 +3,11 @@ test_that("reading in point tiers", {
   tg <- read_textgrid(path)
   expect_equal(nrow(tg), 3)
 
-  # Validate against v1
+  # Validate against v1 and pure-r version
   tg2 <- legacy_read_textgrid(path)
   expect_equal(tg, tg2)
+  tg3 <- r_read_textgrid(path)
+  expect_equal(tg, tg3)
 })
 
 test_that("reading in empty point tiers", {
@@ -13,9 +15,11 @@ test_that("reading in empty point tiers", {
   tg <- read_textgrid(path)
   expect_equal(nrow(tg), 3)
 
-  # Validate against v1
+  # Validate against v1 and pure-r version
   tg2 <- legacy_read_textgrid(path)
   expect_equal(tg, tg2)
+  tg3 <- r_read_textgrid(path)
+  expect_equal(tg, tg3)
 })
 
 test_that("result is a tibble", {
@@ -24,14 +28,43 @@ test_that("result is a tibble", {
   testthat::expect_s3_class(tg, "tbl")
 })
 
+test_that("we can parse numbers supported by Praat.exe", {
+  # The files here are minimal tests for what can be opened by Praat.exe.
+  # We need to
+  path <- testthat::test_path("test-data/praat-test/digit-dot-space-okay.TextGrid")
+  tg <- read_textgrid(path)
+  expect_equal(tg$xmax, 1.0)
+
+  path <- testthat::test_path("test-data/praat-test/plus_or_minus-digit-okay.TextGrid")
+  tg <- read_textgrid(path)
+  expect_equal(tg$tier_xmin, -0.3)
+  expect_equal(tg$tier_xmax, 2.0)
+
+  path <- testthat::test_path("test-data/praat-test/scientific-notation-okay.TextGrid")
+  tg <- read_textgrid(path)
+  expect_equal(tg$tier_xmin, c(0, 0, 0))
+  expect_equal(tg$tier_xmax, c(20, 20, 20))
+  expect_equal(tg$xmin, c(0, 0.5, 10))
+  expect_equal(tg$xmax, c(0.5, 10, 20))
+
+  path <- testthat::test_path("test-data/praat-test/real-with-trailing-characters-okay.TextGrid")
+  tg <- read_textgrid(path)
+  expect_equal(tg$tier_xmin, c(0, 0, 0))
+  expect_equal(tg$tier_xmax, c(20, 20, 20))
+  expect_equal(tg$xmin, c(0, 0.5, 10))
+  expect_equal(tg$xmax, c(0.5, 10, 20))
+})
+
 test_that("example_textgrid works", {
   path <- example_textgrid()
   tg <- read_textgrid(path)
   expect_equal(nrow(tg), 3)
 
-  # Validate against v1
+  # Validate against v1 and pure-r version
   tg2 <- legacy_read_textgrid(path)
   expect_equal(tg, tg2)
+  tg3 <- r_read_textgrid(path)
+  expect_equal(tg, tg3)
 })
 
 test_that("comment textgrid works", {
@@ -56,9 +89,11 @@ test_that("escaped quotes (\"\") are converted to single (\")", {
   expect_false(has_double)
   expect_true(has_single)
 
-  # Validate against v1
+  # Validate against v1 and pure-r version
   tg2 <- legacy_read_textgrid(path)
   expect_equal(tg, tg2)
+  tg3 <- r_read_textgrid(path)
+  expect_equal(tg, tg3)
 })
 
 test_that("can read in hard-to-parse file", {

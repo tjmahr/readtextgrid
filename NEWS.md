@@ -1,7 +1,8 @@
 # readtextgrid dev version
 
 * `read_textgrid()` now manually parses textgrids and can handle short-format 
-  textgrids. (#4, #16, initial parser by @JoFrhwld).
+  textgrids. (#4, #16, initial parser by @JoFrhwld). Part of the parsing is done
+  in C++ so the new manual parser is faster than the legacy version.
 * The original package functions are available in `legacy_read_textgrid()`.
 * `legacy_read_textgrid()` un-escapes `A ""quote"" word` to `A "quoted" word`.
 * `legacy_read_textgrid()` can handle interval text with line breaks in them.

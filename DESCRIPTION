@@ -31,3 +31,5 @@ Imports:
 URL: https://github.com/tjmahr/readtextgrid
 BugReports: https://github.com/tjmahr/readtextgrid/issues
 Roxygen: list(markdown = TRUE)
+LinkingTo: 
+    cpp11

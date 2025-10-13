@@ -66,18 +66,14 @@ read_textgrid_lines <- function(lines, file = NULL) {
     tibble::as_tibble()
 }
 
-
 parse_textgrid_lines <- function(lines) {
-  tg_characters <- lines |>
+  tg_text <- lines |>
     # collapse into one string
     stringr::str_c(collapse = "\n") |>
     # concat one trailing space
-    stringr::str_c(" ") |>
-    # split into individual characters
-    stringr::str_split("") |>
-    unlist()
+    stringr::str_c(" ")
 
-  tg_tokens <- tokenize_textgrid_chars(tg_characters)
+  tg_tokens <- tokenize_textgrid_cpp(tg_text)
   tier_indices <- find_tier_boundaries(tg_tokens)
   tier_types <- tg_tokens[tier_indices$start] |> unlist()
 
@@ -180,107 +176,52 @@ make_points <- function(tier_tokens, tg_tokens) {
   )
 }
 
+tokenize_textgrid_cpp <- function(tg_text) {
+  .NUM_RE <- "^[+-]?\\d+(?:\\.\\d*)?(?:[eE][+-]?\\d+)?"
 
-tokenize_textgrid_chars <- function(all_char) {
-  # The parser rules here follow the textgrid specifications
-  # <https://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html> EXCEPT
-  # when they contradict the behavior of Praat.exe. For example, the specs says
-  # the main literals are freestanding strings and numbers, where freestanding
-  # means that they have a whitespace or boundary (newline or file start/end).
-  # But Praat.exe can handle numbers like "10.00!comment". So, this parser
-  # gathers freestanding literals but only keeps ones that are strings or
-  # start with a valid number (the non-numeric characters are lopped off.)
+  # C++ scan: returns tokens, is_string
+  res <- tg_scan_tokens_cpp(tg_text)
+  toks <- res$tokens
+  is_string <- res$is_string
 
-  in_strong_comment <- FALSE         # Comment mode: ! to new line \n
-  in_string <- FALSE                 # String mode: "Quote to quote"
-  in_escaped_quote <- FALSE          # Escaped quote: "" inside of a string
+  # Keep numbers or quoted strings
+  m  <- regexpr(.NUM_RE, toks, perl = TRUE)
+  ms <- as.integer(m)
+  ml <- attr(m, "match.length")
+  is_num <- ms > 0L
 
-  token_start <- integer(0)          # Start of current token
-  values <- vector(mode = "list")    # Collects completed values
+  keep <- is_num | is_string
+  toks      <- toks[keep]
+  ms        <- ms[keep]
+  ml        <- ml[keep]
+  is_string <- is_string[keep]
+  is_num    <- is_num[keep]
 
-  for (i in seq_along(all_char)) {
-    cur_value_ready <- length(token_start) != 0
-    c <- all_char[i]
-    c_is_whitespace <- c %in% c(" ", "\n")
-    c_starts_string <- c == "\""
+  if (!any(keep)) return(list())
 
-    # Comments start with ! and end with \n. Skip characters in this mode.
-    if (!in_string & c == "!") {
-      in_strong_comment <- TRUE
-      next
-    }
-    if (in_strong_comment) {
-      if (c == "\n") in_strong_comment <- FALSE
-      next
-    }
+  out <- vector("list", length(toks))
 
-    # Whitespace delimits values so collect values if we see whitespace
-    if (c_is_whitespace & !in_string) {
-      # Skip whitespace if no values collected so far
-      if (!cur_value_ready) next
-
-      total_value <- all_char[seq(token_start, i - 1)] |>
-        paste0(collapse = "")
-      is_string <- all_char[token_start] == "\"" && all_char[i - 1] == "\""
-
-      # Collect only numbers and strings
-      if (tg_parse_is_number(total_value)) {
-        # Keep only the numeric part.
-        total_value <- total_value |>
-          stringr::str_extract("^-?\\d+(\\.\\d*)?") |>
-          as.numeric()
-        values <- c(values, total_value)
-      } else if (is_string) {
-        values <- c(values, total_value)
-      }
-      token_start <- integer(0)
-      next
-    }
-
-    # Store character if ending an escaped quote
-    if (in_escaped_quote) {
-      in_escaped_quote <- !in_escaped_quote
-      next
-    }
-
-    # Start or close string mode if we see "
-    if (c_starts_string) {
-      # Check for "" escapes
-      peek_c <- all_char[i + 1]
-      if (peek_c == "\"" & in_string) {
-        in_escaped_quote <- TRUE
-      } else {
-        in_string <- !in_string
-      }
-    }
-
-    if (!cur_value_ready) {
-      token_start <- i
-    }
+  if (any(is_num)) {
+    num_txt <- substring(
+      toks[is_num],
+      ms[is_num],
+      ms[is_num] + ml[is_num] - 1L
+    )
+    out[which(is_num)] <- as.numeric(num_txt)
   }
 
-  values |>
-    lapply(tg_parse_convert_value)
-}
-
-# A numeric token is:
-# string start
-# (optional minus sign)
-# digit(s)
-# (optional decimal point and digit(s))
-tg_parse_is_number <- function(x) {
-  stringr::str_detect(x, "^-?\\d+(\\.\\d*)?")
-}
-
-tg_parse_convert_value <- function(x) {
-  if (is.character(x)) {
-    # unquote strings
-    x <- substr(x, 2, nchar(x) - 1)
-    # undo "" escapement
-    x <- stringr::str_replace_all(x, "\"\"", "\"")
+  if (any(is_string)) {
+    s <- toks[is_string]
+    # strip outer quotes
+    s <- substring(s, 2L, nchar(s) - 1L)
+    # unescape doubled quotes
+    s <- gsub('""', '"', s, fixed = TRUE)
+    out[is_string] <- s
   }
-  x
+
+  out
 }
+
 
 
 find_tier_boundaries <- function(tg_tokens) {
@@ -368,9 +309,3 @@ example_textgrid <- function(which = 1) {
 
   system.file(choices[which], package = "readtextgrid")
 }
-
-
-
-
-
-
