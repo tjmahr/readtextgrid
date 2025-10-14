@@ -7,6 +7,8 @@
 
 [![CRAN
 status](https://www.r-pkg.org/badges/version/readtextgrid)](https://CRAN.R-project.org/package=readtextgrid)
+[![readtextgrid status
+badge](https://tjmahr.r-universe.dev/readtextgrid/badges/version)](https://tjmahr.r-universe.dev/readtextgrid)
 [![R-CMD-check](https://github.com/tjmahr/readtextgrid/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tjmahr/readtextgrid/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
@@ -429,12 +431,12 @@ bench::mark(
 #> # A tibble: 6 × 6
 #>   expression        min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr>   <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 lapply_guess    1.23s    1.23s     0.812   13.32MB     5.69
-#> 2 lapply_set    955.3ms  955.3ms     1.05     5.41MB     6.28
-#> 3 future_guess 414.44ms 423.25ms     2.36   627.53KB     1.18
-#> 4 future_set   353.38ms 357.97ms     2.79   627.53KB     2.79
-#> 5 mirai_guess  347.48ms 351.96ms     2.84  1006.66KB     0   
-#> 6 mirai_set    285.86ms 292.87ms     3.41  1006.66KB     0
+#> 1 lapply_guess     1.2s     1.2s     0.832   13.32MB     5.83
+#> 2 lapply_set    923.1ms  923.1ms     1.08     5.41MB     6.50
+#> 3 future_guess  404.8ms  418.3ms     2.39    627.5KB     1.20
+#> 4 future_set    359.8ms  363.2ms     2.75    627.5KB     2.75
+#> 5 mirai_guess     321ms  331.2ms     3.02  1006.66KB     0   
+#> 6 mirai_set     266.4ms  267.3ms     3.74  1006.66KB     0
 
 mirai::daemons(0)
 ```
@@ -520,8 +522,8 @@ bench::mark(
 #> # A tibble: 2 × 6
 #>   expression      min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 current       115ms    119ms      8.45    1.31MB     4.22
-#> 2 legacy        335ms    345ms      2.88   19.54MB     6.05
+#> 1 current       113ms    117ms      8.49    1.31MB     4.25
+#> 2 legacy        331ms    339ms      2.93   19.46MB     6.16
 ```
 
 ### Helpful columns
