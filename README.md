@@ -249,7 +249,7 @@ tidyr::unnest(data_nested, "data")
 #> # ℹ 2 more variables: text <chr>, annotation_num <int>
 ```
 
-## Pivoting textgrids \[dev version\]
+## Pivoting textgrids
 
 In the textgrids above, there is a natural nesting or hierarchy to the
 tiers. Intervals in `words` tier contain intervals in the `phones` tier.
@@ -309,9 +309,9 @@ data_wide |>
 
 Some remarks:
 
-- Each tier in `tiers` becomes a batch of columns. For the rows for
-  `words` become `words` (the original `text` value), `words_xmin`,
-  `words_xmax`, etc.
+- Each tier in `tiers` becomes a batch of columns. For the rows for the
+  `words` tier become the batch of columns `words` (the original `text`
+  value), `words_xmin`, `words_xmax`, etc.
 - The columns in `join_cols` should uniquely identify a textgrid file,
   so the combination of `speaker` and `file` is needed in the case where
   different speakers have the same file.
@@ -429,12 +429,12 @@ bench::mark(
 #> # A tibble: 6 × 6
 #>   expression        min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr>   <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 lapply_guess    1.17s    1.17s     0.852   13.32MB     5.11
-#> 2 lapply_set   921.69ms 921.69ms     1.08     5.41MB     7.59
-#> 3 future_guess 424.48ms 426.63ms     2.34   627.53KB     1.17
-#> 4 future_set   355.87ms 362.31ms     2.76   627.53KB     2.76
-#> 5 mirai_guess  329.02ms 330.42ms     3.03  1006.66KB     0   
-#> 6 mirai_set    268.57ms    269ms     3.72  1006.66KB     0
+#> 1 lapply_guess    1.23s    1.23s     0.812   13.32MB     5.69
+#> 2 lapply_set    955.3ms  955.3ms     1.05     5.41MB     6.28
+#> 3 future_guess 414.44ms 423.25ms     2.36   627.53KB     1.18
+#> 4 future_set   353.38ms 357.97ms     2.79   627.53KB     2.79
+#> 5 mirai_guess  347.48ms 351.96ms     2.84  1006.66KB     0   
+#> 6 mirai_set    285.86ms 292.87ms     3.41  1006.66KB     0
 
 mirai::daemons(0)
 ```
@@ -520,8 +520,8 @@ bench::mark(
 #> # A tibble: 2 × 6
 #>   expression      min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 current       111ms    114ms      8.76    1.31MB     3.50
-#> 2 legacy        335ms    341ms      2.93   19.54MB     6.45
+#> 1 current       115ms    119ms      8.45    1.31MB     4.22
+#> 2 legacy        335ms    345ms      2.88   19.54MB     6.05
 ```
 
 ### Helpful columns

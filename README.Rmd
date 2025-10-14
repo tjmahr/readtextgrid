@@ -167,7 +167,7 @@ data_nested
 tidyr::unnest(data_nested, "data")
 ```
 
-## Pivoting textgrids [dev version]
+## Pivoting textgrids
 
 In the textgrids above, there is a natural nesting or hierarchy to the tiers.
 Intervals in `words` tier contain intervals in the `phones` tier. It is often
@@ -194,8 +194,9 @@ data_wide |>
 
 Some remarks:
 
-  - Each tier in `tiers` becomes a batch of columns. For the rows for `words`
-    become `words` (the original `text` value), `words_xmin`, `words_xmax`, etc.
+  - Each tier in `tiers` becomes a batch of columns. For the rows for the
+    `words` tier become the batch of columns `words` (the original `text`
+    value), `words_xmin`, `words_xmax`, etc.
   - The columns in `join_cols` should uniquely identify a textgrid file, so the
     combination of `speaker` and `file` is needed in the case where different
     speakers have the same file.

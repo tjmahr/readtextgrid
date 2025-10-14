@@ -58,17 +58,14 @@ pivot_textgrid_tiers <- function(
     tiers,
     join_cols = "file"
 ) {
-  {
-    stopifnot(
-      `tier names must be used in textgrid` =
-        all(tiers %in% unique(data[["tier_name"]]))
-    )
+  stopifnot(
+    `tier names must be used in textgrid` =
+      all(tiers %in% unique(data[["tier_name"]]))
+  )
 
-    # todo
-    # allow only point tiers "TextTier" at last point in nesting
+  # TODO:
+  # allow only point tiers "TextTier" at last point in nesting
 
-    # tier_types <- data[c("tier_name", "tier_type")]
-  }
   tiers <- unique(tiers)
   data <- data[data[["tier_name"]] %in% tiers, ]
 
