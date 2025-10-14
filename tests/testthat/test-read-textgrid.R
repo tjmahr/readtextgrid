@@ -31,30 +31,40 @@ test_that("result is a tibble", {
 test_that("we can parse numbers supported by Praat.exe", {
   # Files here are minimal tests for numbers that can be parsed by Praat.exe.
   # We need to match what Praat.exe supports, not what they say they support.
-  path <- testthat::test_path("test-data/praat-test/digit-dot-space-okay.TextGrid")
+  path <- testthat::test_path("test-data/praat-test/okay-digit-dot-space.TextGrid")
+  # if (interactive()) writeLines(readLines(path))
   tg <- read_textgrid(path)
   expect_equal(tg$xmax, 1.0)
 
-  path <- testthat::test_path("test-data/praat-test/plus_or_minus-digit-okay.TextGrid")
+  path <- testthat::test_path("test-data/praat-test/okay-plus-digit-or-minus-digit.TextGrid")
+  # if (interactive()) writeLines(readLines(path))
   tg <- read_textgrid(path)
   expect_equal(tg$tier_xmin, -0.3)
   expect_equal(tg$tier_xmax, 2.0)
 
-  path <- testthat::test_path("test-data/praat-test/scientific-notation-okay.TextGrid")
+  path <- testthat::test_path("test-data/praat-test/okay-scientific-notation.TextGrid")
+  # if (interactive()) writeLines(readLines(path))
   tg <- read_textgrid(path)
   expect_equal(tg$tier_xmin, c(0, 0, 0))
   expect_equal(tg$tier_xmax, c(20, 20, 20))
   expect_equal(tg$xmin, c(0, 0.5, 10))
   expect_equal(tg$xmax, c(0.5, 10, 20))
 
-  # path <- testthat::test_path("test-data/praat-test/real-with-trailing-characters-okay.TextGrid")
-  # lines <- readLines(path)
-  # writeLines()
-  # tg <- read_textgrid(path)
-  # expect_equal(tg$tier_xmin, c(0, 0, 0))
-  # expect_equal(tg$tier_xmax, c(20, 20, 20))
-  # expect_equal(tg$xmin, c(0, 0.5, 10))
-  # expect_equal(tg$xmax, c(0.5, 10, 20))
+  path <- testthat::test_path("test-data/praat-test/okay-hex-numbers.TextGrid")
+  # if (interactive()) writeLines(readLines(path))
+  tg <- read_textgrid(path)
+  expect_equal(tg$tier_xmin, c(0, 0, 0, 0))
+  expect_equal(tg$tier_xmax, c(3, 3, 3, 3))
+  expect_equal(tg$xmin, c(0, 0.5, 1.5, 2.5))
+  expect_equal(tg$xmax, c(0.5, 1.5, 2.5, 3))
+
+  path <- testthat::test_path("test-data/praat-test/okay-real-with-trailing-characters.TextGrid")
+  # if (interactive()) writeLines(readLines(path))
+  tg <- read_textgrid(path)
+  expect_equal(tg$tier_xmin, c(0, 0, 0))
+  expect_equal(tg$tier_xmax, c(20, 20, 20))
+  expect_equal(tg$xmin, c(0, 0.5, 10))
+  expect_equal(tg$xmax, c(0.5, 10, 20))
 })
 
 test_that("example_textgrid works", {
@@ -191,4 +201,13 @@ test_that("pivoting works with multiple tiers", {
     all() |>
     expect_true()
 
+})
+
+
+
+test_that("we match Praat.exe's parsing behavior", {
+  c("+1.0", "000", "3e", "3E", "-2", "0xA", ".5", "+.0") |>
+    cpp_parse_praat_numbers() |>
+    _$value |>
+    expect_equal(c(1, 0, 3, 3, -2, 10, NA_real_, NA_real_))
 })

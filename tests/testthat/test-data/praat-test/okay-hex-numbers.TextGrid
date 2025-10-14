@@ -10,21 +10,21 @@ item []:
         class = "IntervalTier" 
         name = "Mary" 
         xmin = 0 
-        xmax = 3. 
+        xmax = +0x3. 
         intervals: size = 4
         intervals [1]:
             xmin = 0 
             xmax = 0x0.8 
-            text = "" 
+            text = "0 to 0.5" 
         intervals [2]:
-            xmin = 0x0.8 
-            xmax = 1x1p-1  
-            text = "" 
+            xmin = 0x1P-1 
+            xmax = 0x1.8p+0  
+            text = "0.5 to 1.5" 
         intervals [3]:
-            xmin = 1x1p-1 
-            xmax = 2x1P-1  
-            text = "" 
+            xmin = +0x1.8P0 
+            xmax = 0x1.4p+1  
+            text = "1.5 to 2.5" 
         intervals [4]:
-            xmin = 2x1P-1 
-            xmax = 3  
-            text = "" 
+            xmin = 0x1.4P1 
+            xmax = 0x3  
+            text = "2.5 to 3" 

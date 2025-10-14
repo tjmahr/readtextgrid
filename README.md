@@ -354,12 +354,19 @@ data |>
 ### Speeding things up
 
 Do you have thousands of textgrids to read? The following workflow can
-speed things up. We are going to **read the textgrids in parallel**. We
-use the future package to manage the parallel computation. We use the
-furrr package to get future-friendly versions of the purrr functions. We
-tell future to use a `multisession` `plan` for parallelism: Do the extra
-computation on separate R sessions in the background. Then everything
-else is the same. Just replace `map()` with `future_map()`.
+speed things up. We are going to **read the textgrids in parallel**.
+Below are two approaches:
+
+- future backend and furrr frontend
+- mirai backend and purrr frontend
+
+The backend manages the parallel computation, and the frontend provides
+the syntax for calling a function with parallelism.
+
+Approach 1: We tell future to use a `multisession` `plan` for
+parallelism, so the computations are done on separate R sessions in the
+background. The syntax is like the above purrr code, but we replace
+`map()` with `future_map()`.
 
 ``` r
 library(future)
@@ -372,15 +379,31 @@ data_nested <- tibble(
 )
 ```
 
-By default, readtextgrid uses `readr::guess_encoding()` to determine the
-encoding of the textgrid before reading it in. But if you know the
-encoding beforehand, you can skip this guessing. In my limited testing,
-I found that **setting the encoding** could reduce benchmark times by
-3–4% compared to guessing the encoding.
+Approach 2: We have mirai set up 4 daemons (background processes), and
+then we use purrr’s `in_parallel()` helper to signal to `map()` that the
+function should be run in parallel. We need to give all the information
+needed for the daemons to run the function, so we 1) provide a complete
+function definition (`function(x) ...`) and 2) spell out the package
+namespace `readtextgrid::read_textgrid()`.
+
+``` r
+mirai::daemons(4)
+data_nested <- tibble(
+  speaker = basename(dirname(paths)),
+  data = map(paths, in_parallel(function(x) readtextgrid::read_textgrid(x)))
+)
+mirai::daemons(0)
+```
+
+Another way to eke out performance is to set the encoding. By default,
+readtextgrid uses `readr::guess_encoding()` to determine the encoding of
+the textgrid before reading it in. But if you know the encoding
+beforehand, you can skip this guessing. In my limited testing, I found
+that **setting the encoding** could reduce benchmark times by 3–4%
+compared to guessing the encoding.
 
 Here, we read 100 textgrids using different approaches to benchmark the
-results. We also benchmark purrr’s `in_parallel()` function which uses
-mirai for its parallelism.
+results.
 
 ``` r
 paths_bench <- withr::with_seed(1, sample(paths, 100, replace = TRUE))
@@ -406,26 +429,83 @@ bench::mark(
 #> # A tibble: 6 × 6
 #>   expression        min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr>   <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 lapply_guess    1.28s    1.28s     0.782    13.5MB     5.48
-#> 2 lapply_set      1.06s    1.06s     0.947     5.6MB     6.63
-#> 3 future_guess  468.5ms 475.71ms     2.10   627.32KB     1.05
-#> 4 future_set   385.12ms 400.02ms     2.50   627.32KB     2.50
-#> 5 mirai_guess  364.27ms 366.65ms     2.73     1.47MB     0   
-#> 6 mirai_set     309.6ms 327.02ms     3.06  1006.66KB     0
+#> 1 lapply_guess    1.17s    1.17s     0.852   13.32MB     5.11
+#> 2 lapply_set   921.69ms 921.69ms     1.08     5.41MB     7.59
+#> 3 future_guess 424.48ms 426.63ms     2.34   627.53KB     1.17
+#> 4 future_set   355.87ms 362.31ms     2.76   627.53KB     2.76
+#> 5 mirai_guess  329.02ms 330.42ms     3.03  1006.66KB     0   
+#> 6 mirai_set    268.57ms    269ms     3.72  1006.66KB     0
 
 mirai::daemons(0)
 ```
 
 ### Legacy behavior
 
+The original version of this package assumed textgrids followed a long
+format with helpful labels and annotations. For example, in the
+following textgrid, each number here has a label that makes it easy and
+fast to parse the textgrid with regular expressions:
+
+    File type = "ooTextFile"
+    Object class = "TextGrid"
+
+    xmin = 0 
+    xmax = 1 
+    tiers? <exists> 
+    size = 1 
+    item []: 
+        item [1]:
+            class = "IntervalTier" 
+            name = "Mary" 
+            xmin = 0 
+            xmax = 1 
+            intervals: size = 1 
+            intervals [1]:
+                xmin = 0 
+                xmax = 1 
+                text = "" 
+
+The original version of the parser designed for this textgrid format is
+still provided with the `legacy_read_textgrid()` and
+`legacy_read_textgrid_lines()` functions.
+
 Version 2.0.0 of readtextgrid added a C++ based parser that can handle
-many more textgrid formats (such as short-format textgrids or textgrids
-with comments). The original version of the package assumed the textgrid
-was a long-format textgrid with helpful labels and annotations on the
-lines and used regular expressions to pull out these annotated value.
-The original version of the parser is provided in the `legacy_`
-functions. The new parser, although it scans the textgrid file
-character-by-character, is much faster.
+many more textgrid formats. For example, it can short format textgrids
+like the following:
+
+    File type = "ooTextFile"
+    Object class = "TextGrid"
+
+    0
+    1
+    <exists>
+    1
+    "IntervalTier"
+    "Mary"
+    0
+    1
+    1
+    0
+    1
+    ""
+
+And it can handle more [esoteric
+features](https://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html)
+like comments (that start with `!`) or arbitrary text attached to a
+number (all of the times have `s` after them.)
+
+    File type = "ooTextFile"
+    Object class = "TextGrid"
+
+    ! info about the grid
+    0s 1s <exists> 1
+    ! info about the tier
+    "IntervalTier" "Mary" 0s 1s 1 ! type, name, xmin, xmax, size
+    0s 1s "" ! interval xmin, xmax, size
+
+Because the new parser uses C++ for tokenization—that is, the part scans
+the contents character by character and determines whether the inputs
+are strings, numbers, or skipped—it is much faster the legacy version.
 
 ``` r
 paths_bench <- withr::with_seed(2, sample(paths, 10, replace = TRUE))
@@ -433,16 +513,15 @@ paths_bench <- withr::with_seed(2, sample(paths, 10, replace = TRUE))
 bench::mark(
   current = lapply(paths_bench, read_textgrid),
   legacy = lapply(paths_bench, legacy_read_textgrid),
-  min_iterations = 5,
+  min_iterations = 10, 
+  filter_gc = FALSE,
   check = TRUE
 )
-#> Warning: Some expressions had a GC in every iteration; so filtering is
-#> disabled.
 #> # A tibble: 2 × 6
 #>   expression      min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 current       129ms    138ms      7.34    1.33MB     4.40
-#> 2 legacy        381ms    388ms      2.54   19.54MB     5.08
+#> 1 current       111ms    114ms      8.76    1.31MB     3.50
+#> 2 legacy        335ms    341ms      2.93   19.54MB     6.45
 ```
 
 ### Helpful columns

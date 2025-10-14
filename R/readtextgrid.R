@@ -180,32 +180,23 @@ tokenize_textgrid <- function(tg_text) {
   # .NUM_RE <- "^[+-]?\\d+(?:\\.\\d*)?(?:[eE][+-]?\\d+)?"
 
   # C++ scan for tokens
-  res <- cpp_tg_scan_tokens(tg_text)
+  res <- withr::with_locale(
+    c(LC_NUMERIC = "C"),
+    cpp_tg_scan_tokens(tg_text)
+  )
   toks <- res$tokens
   is_string <- res$is_string
-  # Use R's number scanner to parse numbers
-  res2 <- withr::with_locale(
-    c(LC_NUMERIC = "C"),
-    cpp_parse_praat_numbers(res$tokens)
-  )
-  numbers <- res2$value
+  is_number <- (res$num_prefix != 0) & !is_string
+  keep <- is_number | is_string
 
-  is_num <- !is.na(res2$value)
-  keep <- is_num | is_string
-  toks      <- toks[keep]
-  is_string <- is_string[keep]
-  numbers   <- numbers[keep & is_num]
-  is_num    <- is_num[keep]
-
-  if (!any(keep)) return(list())
-
+  toks <- toks[keep]
   out <- vector("list", length(toks))
-  out[is_num] <- numbers
 
-  s <- toks[is_string]
-  s <- substring(s, 2L, nchar(s) - 1L)
-  s <- gsub('""', '"', s, fixed = TRUE)
-  out[is_string] <- s
+  strings <- toks[is_string[keep]]
+  strings <- substring(strings, 2L, nchar(strings) - 1L)
+  strings <- gsub('""', '"', strings, fixed = TRUE)
+  out[is_string[keep]] <- strings
+  out[is_number[keep]] <- res$num_value[is_number]
 
   out
 }
