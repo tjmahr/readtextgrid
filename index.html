@@ -56,6 +56,20 @@
 
 <p>readtextgrid parses <a href="https://www.fon.hum.uva.nl/praat/" class="external-link">Praat</a> textgrids into tidy R dataframes.</p>
 <div class="section level2">
+<h2 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
+</h2>
+<ul>
+<li>
+<strong>Simple</strong>: Minimal package with two core functions (<code><a href="reference/read_textgrid.html">read_textgrid()</a></code> and <code><a href="reference/read_textgrid.html">read_textgrid_lines()</a></code>).</li>
+<li>
+<strong>Tidy</strong>: Returns rectangular tibbles ready for downstream processing with dplyr and tidyr.</li>
+<li>
+<strong>Flexible</strong>: Supports both long and short textgrid file formats.</li>
+<li>
+<strong>Fast</strong>: Uses a compiled C++ tokenizer for high-throughput parsing.</li>
+</ul>
+</div>
+<div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p>Install readtextgrid from CRAN:</p>
@@ -72,7 +86,7 @@
 <h2 id="basic-usage">Basic usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
 </h2>
 <p>Here is the example textgrid created by Praat. It was created using <code>New &gt; Create TextGrid...</code> with default settings in Praat.</p>
-<p><img src="reference/figures/demo-textgrid.png" width="600"></p>
+<p><img src="reference/figures/demo-textgrid.png" width="600" alt="Textgrid drawing from Praat with three tiers (Mary, John, and Bell)"></p>
 <p>This textgrid is bundled with this R package. We can locate the file with <code><a href="reference/example_textgrid.html">example_textgrid()</a></code>. We read in the textgrid with <code><a href="reference/read_textgrid.html">read_textgrid()</a></code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/tjmahr/readtextgrid" class="external-link">readtextgrid</a></span><span class="op">)</span></span>
@@ -395,12 +409,12 @@
 <span><span class="co">#&gt; # A tibble: 6 × 6</span></span>
 <span><span class="co">#&gt;   expression        min   median `itr/sec` mem_alloc `gc/sec`</span></span>
 <span><span class="co">#&gt;   &lt;bch:expr&gt;   &lt;bch:tm&gt; &lt;bch:tm&gt;     &lt;dbl&gt; &lt;bch:byt&gt;    &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 lapply_guess    1.16s    1.16s     0.863   13.32MB     6.04</span></span>
-<span><span class="co">#&gt; 2 lapply_set   894.42ms 894.42ms     1.12     5.41MB     6.71</span></span>
-<span><span class="co">#&gt; 3 future_guess 414.28ms 438.96ms     2.28   627.53KB     2.28</span></span>
-<span><span class="co">#&gt; 4 future_set    366.7ms 367.79ms     2.72   627.53KB     2.72</span></span>
-<span><span class="co">#&gt; 5 mirai_guess  318.02ms 326.96ms     3.06  1006.66KB     0   </span></span>
-<span><span class="co">#&gt; 6 mirai_set     254.8ms 256.78ms     3.89  1006.66KB     0</span></span>
+<span><span class="co">#&gt; 1 lapply_guess    1.17s    1.17s     0.852   13.32MB     5.96</span></span>
+<span><span class="co">#&gt; 2 lapply_set   883.69ms 883.69ms     1.13     5.41MB     6.79</span></span>
+<span><span class="co">#&gt; 3 future_guess 407.83ms 421.37ms     2.37   627.53KB     2.37</span></span>
+<span><span class="co">#&gt; 4 future_set   356.49ms 358.09ms     2.79   627.53KB     2.79</span></span>
+<span><span class="co">#&gt; 5 mirai_guess  315.85ms 338.82ms     2.95  1006.66KB     0   </span></span>
+<span><span class="co">#&gt; 6 mirai_set    258.63ms 259.45ms     3.85  1006.66KB     0</span></span>
 <span><span class="fu">mirai</span><span class="fu">::</span><span class="fu">daemons</span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -426,7 +440,7 @@
 <span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a>            xmax <span class="ot">=</span> <span class="dv">1</span> </span>
 <span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a>            text <span class="ot">=</span> <span class="st">""</span> </span></code></pre></div>
 <p>The original version of the parser designed for this textgrid format is still provided with the <code><a href="reference/read_textgrid.html">legacy_read_textgrid()</a></code> and <code><a href="reference/read_textgrid.html">legacy_read_textgrid_lines()</a></code> functions.</p>
-<p>Version 2.0.0 of readtextgrid added a C++ based parser that can handle many more textgrid formats. For example, it can “short” format textgrids like the following:</p>
+<p>Version 0.2.0 of readtextgrid added a C++ based parser that can handle many more textgrid formats. For example, it can “short” format textgrids like the following:</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>File type <span class="ot">=</span> <span class="st">"ooTextFile"</span></span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>Object class <span class="ot">=</span> <span class="st">"TextGrid"</span></span>
 <span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a></span>
@@ -466,8 +480,8 @@
 <span><span class="co">#&gt; # A tibble: 2 × 6</span></span>
 <span><span class="co">#&gt;   expression      min   median `itr/sec` mem_alloc `gc/sec`</span></span>
 <span><span class="co">#&gt;   &lt;bch:expr&gt; &lt;bch:tm&gt; &lt;bch:tm&gt;     &lt;dbl&gt; &lt;bch:byt&gt;    &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 current       112ms    115ms      8.62    1.31MB     5.17</span></span>
-<span><span class="co">#&gt; 2 legacy        331ms    336ms      2.97   19.57MB     6.24</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 current       114ms    123ms      8.11    1.31MB     4.86</span></span>
+<span><span class="co">#&gt; 2 legacy        332ms    342ms      2.89   19.57MB     6.06</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="other-tips">Other tips<a class="anchor" aria-label="anchor" href="#other-tips"></a>
