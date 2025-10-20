@@ -14,12 +14,24 @@
 Useful links:
 \itemize{
   \item \url{https://github.com/tjmahr/readtextgrid}
+  \item \url{https://www.tjmahr.com/readtextgrid/}
   \item Report bugs at \url{https://github.com/tjmahr/readtextgrid/issues}
 }
 
 }
 \author{
 \strong{Maintainer}: Tristan Mahr \email{tristan.mahr@wisc.edu} (\href{https://orcid.org/0000-0002-8890-5116}{ORCID})
+
+Authors:
+\itemize{
+  \item Josef Fruehwald
+}
+
+Other contributors:
+\itemize{
+  \item Dan Villarreal [contributor]
+  \item Jonathan Washington [contributor]
+}
 
 }
 \keyword{internal}

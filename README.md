@@ -12,17 +12,19 @@ badge](https://tjmahr.r-universe.dev/readtextgrid/badges/version)](https://tjmah
 [![R-CMD-check](https://github.com/tjmahr/readtextgrid/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tjmahr/readtextgrid/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-readtextgrid parses Praat textgrids into R dataframes.
+readtextgrid parses [Praat](https://www.fon.hum.uva.nl/praat/) textgrids
+into tidy R dataframes.
 
 ## Installation
 
-Install from CRAN:
+Install readtextgrid from CRAN:
 
 ``` r
 install.packages("readtextgrid")
 ```
 
-Install the development version from R-universe:
+**Development version**. Install precompiled version of readtextgrid
+from R-universe:
 
 ``` r
 install.packages(
@@ -31,10 +33,10 @@ install.packages(
 )
 ```
 
-## Basic example
+## Basic usage
 
 Here is the example textgrid created by Praat. It was created using
-`New -> Create TextGrid...` with default settings in Praat.
+`New > Create TextGrid...` with default settings in Praat.
 
 <img src="man/figures/demo-textgrid.png" width="600" />
 
@@ -73,9 +75,9 @@ The columns encode the following information:
   filename in `path`. A user can override this value by setting the
   `file` argument in `read_textgrid(path, file)`, which can be useful if
   textgrids are stored in speaker-specific folders.
-- `tier_num` the number of the tier (as in the left margin of the
+- `tier_num` the number of the tier (as in the left margin of Praat’s
   textgrid editor)
-- `tier_name` the name of the tier (as in the right margin of the
+- `tier_name` the name of the tier (as in the right margin of Praat’s
   textgrid editor)
 - `tier_type` the type of the tier. `"IntervalTier"` for interval tiers
   and `"TextTier"` for point tiers (this is the terminology used inside
@@ -89,24 +91,24 @@ The columns encode the following information:
 
 ## Reading in directories of textgrids
 
-Suppose you have data on multiple speakers with one folder of textgrids
+Suppose we have data on multiple speakers with one folder of textgrids
 per speaker. As an example, this package has a folder called
 `speaker_data` bundled with it representing 5 five textgrids from 2
 speakers.
 
-    speaker-data
-    +-- speaker001
-    |   +-- s2T01.TextGrid
-    |   +-- s2T02.TextGrid
-    |   +-- s2T03.TextGrid
-    |   +-- s2T04.TextGrid
-    |   \-- s2T05.TextGrid
-    \-- speaker002
-        +-- s2T01.TextGrid
-        +-- s2T02.TextGrid
-        +-- s2T03.TextGrid
-        +-- s2T04.TextGrid
-        \-- s2T05.TextGrid
+    📂 speaker-data
+    ├── 📂 speaker001
+    │   ├── s2T01.TextGrid
+    │   ├── s2T02.TextGrid
+    │   ├── s2T03.TextGrid
+    │   ├── s2T04.TextGrid
+    │   └── s2T05.TextGrid
+    └── 📂 speaker002
+        ├── s2T01.TextGrid
+        ├── s2T02.TextGrid
+        ├── s2T03.TextGrid
+        ├── s2T04.TextGrid
+        └── s2T05.TextGrid
 
 First, we create a vector of file-paths to read into R.
 
@@ -123,14 +125,17 @@ paths <- list.files(
 )
 ```
 
-We can use `purrr::map_dfr()`–*map* the `read_textgrid` function over
-the `paths` and combine the dataframes (`_dfr`)—to read all these
-textgrids into R. But note that this way loses the speaker information.
+We can use `purrr::map()`–*map* the `read_textgrid()` function over the
+`paths`—to read all these textgrids into R and combine them from a list
+to a single dataframe with `purrr::list_rbind()`. But note that this way
+doesn’t track any speaker information.
 
 ``` r
 library(purrr)
 
-map_dfr(paths, read_textgrid)
+paths |> 
+  map(read_textgrid) |> 
+  list_rbind()
 #> # A tibble: 150 × 10
 #>    file           tier_num tier_name tier_type    tier_xmin tier_xmax  xmin
 #>    <chr>             <int> <chr>     <chr>            <dbl>     <dbl> <dbl>
@@ -159,14 +164,18 @@ map_dfr(paths, read_textgrid)
 #> # ℹ 140 more rows
 ```
 
-We can use `purrr::map2_dfr()` and some dataframe manipulation to add
-the speaker information.
+By default, `read_textgrid()` uses the file basename (the file-path
+minus the directory part) for the `file` column. But we can manually set
+the `file` value. Here, we use `purrr::map2()` to map the function over
+`read_textgrid(path, file)` over `path` and `file` pairs. Then we add
+the speaker information with some dataframe manipulation functions.
 
 ``` r
 library(dplyr)
 
 # This tells read_textgrid() to set the file column to the full path
-data <- map2_dfr(paths, paths, read_textgrid) |> 
+data <- map2(paths, paths, read_textgrid) |> 
+  list_rbind() |> 
   mutate(
     # basename() removes the folder part from a path, 
     # dirname() removes the file part from a path
@@ -207,7 +216,7 @@ data
 ```
 
 Another strategy would be to read the textgrid dataframes into a list
-column and `unnest()` them.
+column and `tidyr::unnest()` them.
 
 ``` r
 # Read dataframes into a list column
@@ -251,14 +260,14 @@ tidyr::unnest(data_nested, "data")
 #> # ℹ 2 more variables: text <chr>, annotation_num <int>
 ```
 
-## Pivoting textgrids
+## Pivoting nested intervals in textgrids
 
 In the textgrids above, there is a natural nesting or hierarchy to the
 tiers. Intervals in `words` tier contain intervals in the `phones` tier.
 It is often necessary to group intervals by their parent intervals
 (group phones by words). This package provides the
 `pivot_textgrid_tiers()` function to convert textgrids into a wide
-format in a way that respect the nesting/hierarchy of tiers.
+format in a way that respects the nesting/hierarchy of tiers.
 
 ``` r
 data_wide <- pivot_textgrid_tiers(
@@ -287,7 +296,7 @@ data_wide
 #> #   phones_xmax <dbl>, phones_xmid <dbl>, phones_annotation_num <int>,
 #> #   phones_tier_num <int>, phones_tier_type <chr>
 
-# more clearly,
+# more clearly
 data_wide |> 
   select(
     speaker, file, words, phones, 
@@ -351,9 +360,7 @@ data |>
 #> #   tier_xmin <dbl>, tier_xmax <dbl>
 ```
 
-## Other tips
-
-### Speeding things up
+## Speeding things up
 
 Do you have thousands of textgrids to read? The following workflow can
 speed things up. We are going to **read the textgrids in parallel**.
@@ -365,7 +372,7 @@ Below are two approaches:
 The backend manages the parallel computation, and the frontend provides
 the syntax for calling a function with parallelism.
 
-Approach 1: We tell future to use a `multisession` `plan` for
+**Approach 1**: We tell future to use a `multisession` `plan` for
 parallelism, so the computations are done on separate R sessions in the
 background. The syntax is like the above purrr code, but we replace
 `map()` with `future_map()`.
@@ -381,12 +388,12 @@ data_nested <- tibble(
 )
 ```
 
-Approach 2: We have mirai set up 4 daemons (background processes), and
-then we use purrr’s `in_parallel()` helper to signal to `map()` that the
-function should be run in parallel. We need to give all the information
-needed for the daemons to run the function, so we 1) provide a complete
-function definition (`function(x) ...`) and 2) spell out the package
-namespace `readtextgrid::read_textgrid()`.
+**Approach 2**: We have mirai set up 4 daemons (background processes),
+and then we use purrr’s `in_parallel()` helper to signal to `map()` that
+the function should be run in parallel. We need to give *all* the
+information needed for the daemons to run the function, so we 1) provide
+a complete function definition (including `function(x) ...`) and 2)
+spell out the package namespace `readtextgrid::read_textgrid()`.
 
 ``` r
 mirai::daemons(4)
@@ -413,9 +420,9 @@ paths_bench <- withr::with_seed(1, sample(paths, 100, replace = TRUE))
 mirai::daemons(4)
 bench::mark(
   lapply_guess = lapply(paths_bench, read_textgrid),
-  lapply_set = lapply(paths_bench, read_textgrid, encoding = "UTF-8"),
+  lapply_set   = lapply(paths_bench, read_textgrid, encoding = "UTF-8"),
   future_guess = future_map(paths_bench, read_textgrid),
-  future_set = future_map(paths_bench, read_textgrid, encoding = "UTF-8"), 
+  future_set   = future_map(paths_bench, read_textgrid, encoding = "UTF-8"), 
   mirai_guess = purrr::map(
     paths_bench, 
     in_parallel(function(x) readtextgrid::read_textgrid(x))
@@ -431,22 +438,21 @@ bench::mark(
 #> # A tibble: 6 × 6
 #>   expression        min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr>   <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 lapply_guess     1.2s     1.2s     0.832   13.32MB     5.83
-#> 2 lapply_set    923.1ms  923.1ms     1.08     5.41MB     6.50
-#> 3 future_guess  404.8ms  418.3ms     2.39    627.5KB     1.20
-#> 4 future_set    359.8ms  363.2ms     2.75    627.5KB     2.75
-#> 5 mirai_guess     321ms  331.2ms     3.02  1006.66KB     0   
-#> 6 mirai_set     266.4ms  267.3ms     3.74  1006.66KB     0
-
+#> 1 lapply_guess    1.16s    1.16s     0.863   13.32MB     6.04
+#> 2 lapply_set   894.42ms 894.42ms     1.12     5.41MB     6.71
+#> 3 future_guess 414.28ms 438.96ms     2.28   627.53KB     2.28
+#> 4 future_set    366.7ms 367.79ms     2.72   627.53KB     2.72
+#> 5 mirai_guess  318.02ms 326.96ms     3.06  1006.66KB     0   
+#> 6 mirai_set     254.8ms 256.78ms     3.89  1006.66KB     0
 mirai::daemons(0)
 ```
 
-### Legacy behavior
+## Legacy behavior and supported textgrid formats
 
-The original version of this package assumed textgrids followed a long
-format with helpful labels and annotations. For example, in the
-following textgrid, each number here has a label that makes it easy and
-fast to parse the textgrid with regular expressions:
+The original version of this package assumed the textgrid text files
+followed a “long” format with helpful labels and annotations. For
+example, in the following textgrid, each number has a label that makes
+it easy and fast to parse the textgrid with regular expressions:
 
     File type = "ooTextFile"
     Object class = "TextGrid"
@@ -472,7 +478,7 @@ still provided with the `legacy_read_textgrid()` and
 `legacy_read_textgrid_lines()` functions.
 
 Version 2.0.0 of readtextgrid added a C++ based parser that can handle
-many more textgrid formats. For example, it can short format textgrids
+many more textgrid formats. For example, it can “short” format textgrids
 like the following:
 
     File type = "ooTextFile"
@@ -491,10 +497,14 @@ like the following:
     1
     ""
 
-And it can handle more [esoteric
+The “long” format textgrids are outputted in Praat with
+`Save > Save as text file...`, and the “short” format textgrids are
+outputted with `Save > Save as short textfile...`.
+
+readtextgrid’s parser can also handle [esoteric
 features](https://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html)
 like comments (that start with `!`) or arbitrary text attached to a
-number (all of the times have `s` after them.)
+number, as in the following example;:
 
     File type = "ooTextFile"
     Object class = "TextGrid"
@@ -522,9 +532,11 @@ bench::mark(
 #> # A tibble: 2 × 6
 #>   expression      min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 current       113ms    117ms      8.49    1.31MB     4.25
-#> 2 legacy        331ms    339ms      2.93   19.46MB     6.16
+#> 1 current       112ms    115ms      8.62    1.31MB     5.17
+#> 2 legacy        331ms    336ms      2.97   19.57MB     6.24
 ```
+
+## Other tips
 
 ### Helpful columns
 

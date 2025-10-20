@@ -1,6 +1,6 @@
 # Implementation of the textgrid parsing written in pure R.
 # This was ported to C++ for speed but it's important to have around
-# for unit tests
+# for unit tests as a reference implementation.
 
 r_read_textgrid <- function(path, file = NULL, encoding = NULL) {
   if (is.null(file)) {

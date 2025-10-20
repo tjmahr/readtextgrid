@@ -21,17 +21,29 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/tjmahr/readtextgrid/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tjmahr/readtextgrid/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-readtextgrid parses Praat textgrids into R dataframes.
+readtextgrid parses [Praat](https://www.fon.hum.uva.nl/praat/) textgrids
+into tidy R dataframes.
+
+## Features
+
+  - **Simple**: Minimal package with two core functions (`read_textgrid()` and
+    `read_textgrid_lines()`).
+  - **Tidy**: Returns rectangular tibbles ready for downstream processing with
+    dplyr and tidyr.
+  - **Flexible**: Supports both long and short textgrid file formats.
+  - **Fast**: Uses a compiled C++ tokenizer for high-throughput parsing.
+
 
 ## Installation
 
-Install from CRAN:
+Install readtextgrid from CRAN:
 
 ``` r 
 install.packages("readtextgrid")
 ```
 
-Install the development version from R-universe:
+**Development version**. Install precompiled version of readtextgrid from 
+R-universe:
 
 ``` r
 install.packages(
@@ -40,12 +52,14 @@ install.packages(
 )
 ```
 
-## Basic example
+
+
+## Basic usage
 
 Here is the example textgrid created by Praat. It was created using 
-`New -> Create TextGrid...` with default settings in Praat.
+`New > Create TextGrid...` with default settings in Praat.
 
-<img src="man/figures/demo-textgrid.png" width="600" /> 
+<img src="man/figures/demo-textgrid.png" width="600" alt="Textgrid drawing from Praat with three tiers (Mary, John, and Bell)"/> 
 
 This textgrid is bundled with this R package. We can locate the file with
 `example_textgrid()`. We read in the textgrid with `read_textgrid()`.
@@ -69,9 +83,9 @@ The columns encode the following information:
     `path`. A user can override this value by setting the `file` argument in
     `read_textgrid(path, file)`, which can be useful if textgrids are stored in
     speaker-specific folders.
-  - `tier_num` the number of the tier (as in the left margin of the textgrid
+  - `tier_num` the number of the tier (as in the left margin of Praat's textgrid
     editor)
-  - `tier_name` the name of the tier (as in the right margin of the textgrid
+  - `tier_name` the name of the tier (as in the right margin of Praat's textgrid
     editor)
   - `tier_type` the type of the tier. `"IntervalTier"` for interval tiers and
     `"TextTier"` for point tiers (this is the terminology used inside of the
@@ -85,24 +99,24 @@ The columns encode the following information:
 
 ## Reading in directories of textgrids
 
-Suppose you have data on multiple speakers with one folder of textgrids per
+Suppose we have data on multiple speakers with one folder of textgrids per
 speaker. As an example, this package has a folder called `speaker_data` bundled
 with it representing 5 five textgrids from 2 speakers.
 
 ```
-speaker-data
-+-- speaker001
-|   +-- s2T01.TextGrid
-|   +-- s2T02.TextGrid
-|   +-- s2T03.TextGrid
-|   +-- s2T04.TextGrid
-|   \-- s2T05.TextGrid
-\-- speaker002
-    +-- s2T01.TextGrid
-    +-- s2T02.TextGrid
-    +-- s2T03.TextGrid
-    +-- s2T04.TextGrid
-    \-- s2T05.TextGrid
+📂 speaker-data
+├── 📂 speaker001
+│   ├── s2T01.TextGrid
+│   ├── s2T02.TextGrid
+│   ├── s2T03.TextGrid
+│   ├── s2T04.TextGrid
+│   └── s2T05.TextGrid
+└── 📂 speaker002
+    ├── s2T01.TextGrid
+    ├── s2T02.TextGrid
+    ├── s2T03.TextGrid
+    ├── s2T04.TextGrid
+    └── s2T05.TextGrid
 ```
 
 First, we create a vector of file-paths to read into R.
@@ -120,24 +134,31 @@ paths <- list.files(
 )
 ```
 
-We can use `purrr::map_dfr()`--*map* the `read_textgrid` function over the
-`paths` and combine the dataframes (`_dfr`)---to read all these textgrids into
-R. But note that this way loses the speaker information.
+We can use `purrr::map()`--*map* the `read_textgrid()` function over the
+`paths`---to read all these textgrids into R and combine them from a list to a
+single dataframe with `purrr::list_rbind()`. But note that this way doesn't
+track any speaker information.
 
 ```{r, R.options = list(tibble.width = 100)}
 library(purrr)
 
-map_dfr(paths, read_textgrid)
+paths |> 
+  map(read_textgrid) |> 
+  list_rbind()
 ```
 
-We can use `purrr::map2_dfr()` and some dataframe manipulation to add the
-speaker information. 
+By default, `read_textgrid()` uses the file basename (the file-path minus the
+directory part) for the `file` column. But we can manually set the `file` value.
+Here, we use `purrr::map2()` to map the function over `read_textgrid(path, file)`
+over `path` and `file` pairs. Then we add the speaker information with 
+some dataframe manipulation functions.
 
 ```{r, R.options = list(tibble.width = 100), message = FALSE, warning = FALSE}
 library(dplyr)
 
 # This tells read_textgrid() to set the file column to the full path
-data <- map2_dfr(paths, paths, read_textgrid) |> 
+data <- map2(paths, paths, read_textgrid) |> 
+  list_rbind() |> 
   mutate(
     # basename() removes the folder part from a path, 
     # dirname() removes the file part from a path
@@ -152,7 +173,7 @@ data
 ```
 
 Another strategy would be to read the textgrid dataframes into a list column and
-`unnest()` them.
+`tidyr::unnest()` them.
 
 ```{r}
 # Read dataframes into a list column
@@ -168,13 +189,16 @@ data_nested
 tidyr::unnest(data_nested, "data")
 ```
 
-## Pivoting textgrids
+
+
+
+## Pivoting nested intervals in textgrids
 
 In the textgrids above, there is a natural nesting or hierarchy to the tiers.
 Intervals in `words` tier contain intervals in the `phones` tier. It is often
 necessary to group intervals by their parent intervals (group phones by words).
 This package provides the `pivot_textgrid_tiers()` function to convert textgrids
-into a wide format in a way that respect the nesting/hierarchy of tiers.
+into a wide format in a way that respects the nesting/hierarchy of tiers.
 
 ```{r}
 data_wide <- pivot_textgrid_tiers(
@@ -185,7 +209,7 @@ data_wide <- pivot_textgrid_tiers(
 
 data_wide
 
-# more clearly,
+# more clearly
 data_wide |> 
   select(
     speaker, file, words, phones, 
@@ -218,9 +242,7 @@ data |>
 ```
 
 
-## Other tips
-
-### Speeding things up
+## Speeding things up
 
 Do you have thousands of textgrids to read? The following workflow can speed
 things up. We are going to **read the textgrids in parallel**. Below are two 
@@ -232,7 +254,7 @@ approaches:
 The backend manages the parallel computation, and the frontend provides the 
 syntax for calling a function with parallelism. 
 
-Approach 1: We tell future to use a `multisession` `plan` for parallelism,
+**Approach 1**: We tell future to use a `multisession` `plan` for parallelism,
 so the computations are done on separate R sessions in the background. The
 syntax is like the above purrr code, but we replace `map()` with `future_map()`.
 
@@ -247,11 +269,11 @@ data_nested <- tibble(
 )
 ```
 
-Approach 2: We have mirai set up 4 daemons (background processes), and then we
-use purrr's `in_parallel()` helper to signal to `map()` that the function should
-be run in parallel. We need to give all the information needed for the daemons
-to run the function, so we 1) provide a complete function definition
-(`function(x) ...`) and 2) spell out the package namespace
+**Approach 2**: We have mirai set up 4 daemons (background processes), and then
+we use purrr's `in_parallel()` helper to signal to `map()` that the function
+should be run in parallel. We need to give *all* the information needed for the
+daemons to run the function, so we 1) provide a complete function definition
+(including `function(x) ...`) and 2) spell out the package namespace
 `readtextgrid::read_textgrid()`.
 
 ```{r, warning = FALSE}
@@ -278,9 +300,9 @@ paths_bench <- withr::with_seed(1, sample(paths, 100, replace = TRUE))
 mirai::daemons(4)
 bench::mark(
   lapply_guess = lapply(paths_bench, read_textgrid),
-  lapply_set = lapply(paths_bench, read_textgrid, encoding = "UTF-8"),
+  lapply_set   = lapply(paths_bench, read_textgrid, encoding = "UTF-8"),
   future_guess = future_map(paths_bench, read_textgrid),
-  future_set = future_map(paths_bench, read_textgrid, encoding = "UTF-8"), 
+  future_set   = future_map(paths_bench, read_textgrid, encoding = "UTF-8"), 
   mirai_guess = purrr::map(
     paths_bench, 
     in_parallel(function(x) readtextgrid::read_textgrid(x))
@@ -291,11 +313,10 @@ bench::mark(
   ),
   check = TRUE
 )
-
 mirai::daemons(0)
 ```
 
-### Legacy behavior
+## Legacy behavior and supported textgrid formats
 
 ```{r, include = FALSE}
 examples <- c(
@@ -350,10 +371,10 @@ example_tgs <- lapply(examples, read_textgrid_lines)
 ```
 
 
-The original version of this package assumed textgrids followed a long format
-with helpful labels and annotations. For example, in the following textgrid,
-each number here has a label that makes it easy and fast to parse the textgrid
-with regular expressions:
+The original version of this package assumed the textgrid text files followed a
+"long" format with helpful labels and annotations. For example, in the following
+textgrid, each number has a label that makes it easy and fast to parse the
+textgrid with regular expressions:
 
 ```{r, echo = FALSE, comment = ""}
 writeLines(examples[1])
@@ -364,16 +385,21 @@ provided with the `legacy_read_textgrid()` and `legacy_read_textgrid_lines()`
 functions.
 
 Version 2.0.0 of readtextgrid added a C++ based parser that can handle many more
-textgrid formats. For example, it can short format textgrids like the following:
+textgrid formats. For example, it can "short" format textgrids like the
+following:
 
 ```{r, echo = FALSE, comment = ""}
 writeLines(examples[2])
 ```
 
-And it can handle more [esoteric
+The "long" format textgrids are outputted in Praat with `Save > Save as text
+file...`, and the "short" format textgrids are outputted with `Save > Save as
+short textfile...`.
+
+readtextgrid's parser can also handle [esoteric
 features](https://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html)
-like comments (that start with `!`) or arbitrary text attached to a number (all
-of the times have `s` after them.)
+like comments (that start with `!`) or arbitrary text attached to a number, as 
+in the following example;:
 
 ```{r, echo = FALSE, comment = ""}
 writeLines(examples[3])
@@ -395,6 +421,7 @@ bench::mark(
 )
 ```
 
+## Other tips
 
 ### Helpful columns
 

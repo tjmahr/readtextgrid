@@ -13,3 +13,6 @@
 ^CRAN-RELEASE$
 ^CODE_OF_CONDUCT\.md$
 ^CRAN-SUBMISSION$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
