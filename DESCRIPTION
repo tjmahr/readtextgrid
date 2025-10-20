@@ -35,3 +35,4 @@ BugReports: https://github.com/tjmahr/readtextgrid/issues
 Roxygen: list(markdown = TRUE)
 LinkingTo: 
     cpp11
+Config/Needs/website: rmarkdown

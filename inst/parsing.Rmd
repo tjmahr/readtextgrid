@@ -1,0 +1,128 @@
+---
+title: "parsing"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+examples <- c(
+'File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 1 
+tiers? <exists> 
+size = 1 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "Mary" 
+        xmin = 0 
+        xmax = 1 
+        intervals: size = 1 
+        intervals [1]:
+            xmin = 0 
+            xmax = 1 
+            text = "" 
+',
+
+'File type = "ooTextFile"
+Object class = "TextGrid"
+
+0
+1
+<exists>
+1
+"IntervalTier"
+"Mary"
+0
+1
+1
+0
+1
+""
+',
+'File type = "ooTextFile"
+Object class = "TextGrid"
+
+! info about the grid
+0s 1s <exists> 1
+! info about the tier
+"IntervalTier" "Mary" 0s 1s 1 ! type, name, xmin, xmax, size
+0s 1s "" ! interval xmin, xmax, size
+'
+)
+# make sure these don't actually error
+example_tgs <- lapply(examples, read_textgrid_lines)
+stopifnot(length(unique(example_tgs)) == 1)
+```
+
+```{r setup}
+library(readtextgrid)
+```
+
+Below are three versions of the same Praat textgrid.
+
+Long format:
+
+```{r, echo = FALSE, comment = ""}
+writeLines(examples[1])
+```
+
+Short format:
+
+```{r, echo = FALSE, comment = ""}
+writeLines(examples[2])
+```
+
+Short format with comments and other noise:
+
+```{r, echo = FALSE, comment = ""}
+writeLines(examples[3])
+```
+
+Our parser handles all three of these files in the same way because the Praat 
+textgrid specification is simple. I developed the specification by 
+reading Praat's description of the format, testing various edge cases in the format and seeing whether
+Praat would open the test file. If Praat could handle the file, it had to be supported by this package's textgrid parser.
+
+
+
+  - There are two kinds of tokens: strings and numbers.
+  
+  - Strings start and end with a `"`. If a string is supposed
+    to have `"` inside of it, double the quotes instead. The textgrid interval
+    text `He said "hello" to me` would have the string `"He said ""hello"" to
+    me"`. Everything inside of the `"` pair belongs to the string, even line
+    breaks.
+    
+  - A string is "freestanding". It should be preceded and followed by a space,
+    newline, or the start or end of a file. `I said"Hello"` does not contain a 
+    string.
+
+  - There are numbers. These start with a plus, minus or digit, I do not have a
+    full specification of the numbers supported by Praat, but they may contain a
+    decimal point or scientific notation. 
+    
+  - Numbers are "left freestanding" (my terminology). They must be preceded by a
+    space or newline. From a valid start of a number, characters are read until
+    the sequence of characters would no longer yield a number. Any additional
+    characters until the next space, newline, or file boundary are ignored. For
+    example, in `100ms` and `+100e1ms` the final `ms` are characters are
+    ignored.
+    
+  - Everything else is a comment and ignored. I differentiate between kinds of 
+    comments. This is my terminology, not Praat's.
+  
+  - "Strong" comments start with a `!` and end with a new line (`\n`).
+  
+  - "Weak" comments would be any token that does start like a string or number.
+    In the long format textgrid, `size = 1` would be two ignored weak comments
+    (`size`, `=`) and a number (`1`).
+
+  
+
+
