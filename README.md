@@ -15,6 +15,15 @@ badge](https://tjmahr.r-universe.dev/readtextgrid/badges/version)](https://tjmah
 readtextgrid parses [Praat](https://www.fon.hum.uva.nl/praat/) textgrids
 into tidy R dataframes.
 
+## Features
+
+- **Simple**: Minimal package with two core functions (`read_textgrid()`
+  and `read_textgrid_lines()`).
+- **Tidy**: Returns rectangular tibbles ready for downstream processing
+  with dplyr and tidyr.
+- **Flexible**: Supports both long and short textgrid file formats.
+- **Fast**: Uses a compiled C++ tokenizer for high-throughput parsing.
+
 ## Installation
 
 Install readtextgrid from CRAN:
@@ -38,7 +47,7 @@ install.packages(
 Here is the example textgrid created by Praat. It was created using
 `New > Create TextGrid...` with default settings in Praat.
 
-<img src="man/figures/demo-textgrid.png" width="600" />
+<img src="man/figures/demo-textgrid.png" width="600" alt="Textgrid drawing from Praat with three tiers (Mary, John, and Bell)"/>
 
 This textgrid is bundled with this R package. We can locate the file
 with `example_textgrid()`. We read in the textgrid with
@@ -438,12 +447,12 @@ bench::mark(
 #> # A tibble: 6 × 6
 #>   expression        min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr>   <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 lapply_guess    1.16s    1.16s     0.863   13.32MB     6.04
-#> 2 lapply_set   894.42ms 894.42ms     1.12     5.41MB     6.71
-#> 3 future_guess 414.28ms 438.96ms     2.28   627.53KB     2.28
-#> 4 future_set    366.7ms 367.79ms     2.72   627.53KB     2.72
-#> 5 mirai_guess  318.02ms 326.96ms     3.06  1006.66KB     0   
-#> 6 mirai_set     254.8ms 256.78ms     3.89  1006.66KB     0
+#> 1 lapply_guess    1.17s    1.17s     0.852   13.32MB     5.96
+#> 2 lapply_set   883.69ms 883.69ms     1.13     5.41MB     6.79
+#> 3 future_guess 407.83ms 421.37ms     2.37   627.53KB     2.37
+#> 4 future_set   356.49ms 358.09ms     2.79   627.53KB     2.79
+#> 5 mirai_guess  315.85ms 338.82ms     2.95  1006.66KB     0   
+#> 6 mirai_set    258.63ms 259.45ms     3.85  1006.66KB     0
 mirai::daemons(0)
 ```
 
@@ -477,7 +486,7 @@ The original version of the parser designed for this textgrid format is
 still provided with the `legacy_read_textgrid()` and
 `legacy_read_textgrid_lines()` functions.
 
-Version 2.0.0 of readtextgrid added a C++ based parser that can handle
+Version 0.2.0 of readtextgrid added a C++ based parser that can handle
 many more textgrid formats. For example, it can “short” format textgrids
 like the following:
 
@@ -532,8 +541,8 @@ bench::mark(
 #> # A tibble: 2 × 6
 #>   expression      min   median `itr/sec` mem_alloc `gc/sec`
 #>   <bch:expr> <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
-#> 1 current       112ms    115ms      8.62    1.31MB     5.17
-#> 2 legacy        331ms    336ms      2.97   19.57MB     6.24
+#> 1 current       114ms    123ms      8.11    1.31MB     4.86
+#> 2 legacy        332ms    342ms      2.89   19.57MB     6.06
 ```
 
 ## Other tips

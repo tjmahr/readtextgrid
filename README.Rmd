@@ -384,7 +384,7 @@ The original version of the parser designed for this textgrid format is still
 provided with the `legacy_read_textgrid()` and `legacy_read_textgrid_lines()`
 functions.
 
-Version 2.0.0 of readtextgrid added a C++ based parser that can handle many more
+Version 0.2.0 of readtextgrid added a C++ based parser that can handle many more
 textgrid formats. For example, it can "short" format textgrids like the
 following:
 
