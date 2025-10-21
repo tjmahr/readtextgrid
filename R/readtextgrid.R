@@ -177,8 +177,6 @@ make_points <- function(tier_tokens, tg_tokens) {
 }
 
 tokenize_textgrid <- function(tg_text) {
-  # .NUM_RE <- "^[+-]?\\d+(?:\\.\\d*)?(?:[eE][+-]?\\d+)?"
-
   # C++ scan for tokens
   res <- withr::with_locale(
     c(LC_NUMERIC = "C"),

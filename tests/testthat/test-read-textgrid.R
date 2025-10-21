@@ -111,16 +111,22 @@ test_that("escaped quotes (\"\") are converted to single (\")", {
 test_that("can read in hard-to-parse file", {
   path <- testthat::test_path("test-data/hard-to-parse.TextGrid")
   tg <- read_textgrid(path)
+
+  # Validate against pure r
+  tg4 <- r_read_textgrid(path)
+  tg4$file <- "hard-to-parse.TextGrid"
+  expect_equal(tg, tg4)
+
   # a version of the TextGrid opened and saved by Praat to a long TextGrid
   path2 <- testthat::test_path("test-data/hard-to-parse-normalized.TextGrid")
   tg2 <- read_textgrid(path2)
   tg2$file <- "hard-to-parse.TextGrid"
   expect_equal(tg, tg2)
 
-  # Validate against v1
+  # Validate against v1 opening the normalized version
   tg3 <- legacy_read_textgrid(path2)
   tg3$file <- "hard-to-parse.TextGrid"
-  expect_equal(tg2, tg3)
+  expect_equal(tg, tg3)
 })
 
 

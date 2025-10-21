@@ -1,0 +1,458 @@
+---
+title: "Textgrid specification"
+author: Tristan Mahr
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+examples <- c(
+'File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 1 
+tiers? <exists> 
+size = 1 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "Mary" 
+        xmin = 0 
+        xmax = 1 
+        intervals: size = 1 
+        intervals [1]:
+            xmin = 0 
+            xmax = 1 
+            text = "" 
+',
+
+'File type = "ooTextFile"
+Object class = "TextGrid"
+
+0
+1
+<exists>
+1
+"IntervalTier"
+"Mary"
+0
+1
+1
+0
+1
+""
+',
+'File type = "ooTextFile"
+Object class = "TextGrid"
+
+! info about the grid
+0s 1s <exists> 1
+! info about the tier
+"IntervalTier" "Mary" 0s 1s 1 ! type, name, xmin, xmax, size
+0s 1s "" ! interval xmin, xmax, size
+'
+)
+# make sure these don't actually error
+example_tgs <- lapply(examples, readtextgrid::read_textgrid_lines)
+stopifnot(length(unique(example_tgs)) == 1)
+```
+
+
+*This vignette documents the internal parsing logic of the readtextgrid package.
+It is intended for developers maintaining the parser or for developers in other 
+languages, not for end users of the package.*
+
+In this article, I describe the specification of the .TextGrid file format 
+used in this package, how it differs than the documented specification provided
+by Praat, and provide a high-level overview of R code and a C++ 
+translation that can parse .TextGrid files.
+
+## Example .TextGrid file contents
+
+The .TextGrid file format used by Praat is very flexible. Below are three
+versions of the same Praat textgrid.
+
+Long format:
+
+```{r, echo = FALSE, comment = ""}
+writeLines(examples[1])
+```
+
+Short format:
+
+```{r, echo = FALSE, comment = ""}
+writeLines(examples[2])
+```
+
+Custom format with comments and other noise:
+
+```{r, echo = FALSE, comment = ""}
+writeLines(examples[3])
+```
+
+readtextgrid can handle all three of these files in the same way because the
+Praat textgrid specification is simple---once you figure it out. I developed the
+readtextgrid specification by reading Praat's description of the format, testing
+various edge cases in the format and seeing whether Praat would open the test
+file. If Praat could handle the file, it had to be supported by this package's
+textgrid parser.
+
+
+## Package design
+
+To read in .TextGrid file, we do the following:
+
+- read it in with the proper character encoding
+- tokenize the file contents from a bunch of characters into a list of 
+  Praat strings and Praat numbers 
+- identify the start and end tokens of each textgrid tier
+- split those tokens up into batches of data and assemble dataframes
+
+This document concerns the tokenization step. The remaining parsing steps 
+follow straightforward split-apply-combine R programming.
+
+
+## Documented .TextGrid file format specification
+
+First, let's start with [Paul Boersma's own
+description](https://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html)
+of the file format. He notes that the long format contains several comments to
+help a person read the file, and that these are ultimately ignored by Praat.
+Instead, there are only a few important tokens:
+
+> Praat will consider as data only the following types of information in the
+> file:
+> 
+>   - free-standing numbers, such as `0` and `2.3` above, but not `[1]` or
+>     `[3]`;
+>   - free-standing text enclosed within double quotes, such as `"TextGrid"` and
+>     `""` above;
+>   - free-standing flags, such as `<exists>` above (this is the only flag that
+>     appears in TextGrid files [...]).
+> 
+> In this list, "free-standing" means that the number, text or flag is preceded
+> by the beginning of the file, the beginning of a line, or a space, and that it
+> is followed by the end of the file, the end of a line, or a space.
+
+He also mentions additional features about the format:
+
+  - `!` comments: "everything that follows an exclamation mark on the same line
+    is considered a comment".
+  - `""` escapement by doubling: "a double quote that appears in a text
+    [*i.e.*, a string] is written as a *doubled* double quote in the text
+    file."
+  - ignore the `<flag>` tokens anyway: "The flag `<exists>`, which tells us that
+    this TextGrid contains tiers (this value would be `<absent>` if the TextGrid
+    contained no tiers, in which case the file would end here; however, you
+    cannot really create TextGrid objects without tiers in Praat, so this issue
+    can be ignored)."
+
+These details are mostly accurate and simple enough, but they don't tell you
+what to do with `.1` for example (it's an error in Praat).
+
+
+## Our specification of the .TextGrid file format
+
+After some testing, I figured out the following specification for this R package. 
+
+  - There are two kinds of tokens: strings and numbers.
+  
+  - **Strings** start and end with a `"`. If a string is supposed to have `"` inside
+    of it, double the quotes instead. The textgrid interval text *He said
+    "hello" to me* would have the string `"He said ""hello"" to me"`. Everything
+    inside of the `"` pair belongs to the string, even line breaks and comments.
+    
+  - A string is fully "free-standing". It should be preceded and followed by a
+    space, newline, or the start or end of a file. `I said"Hello"` does not
+    contain a string because there is space before the `"` character.
+
+  - **Numbers** start with a plus, minus or digit, I do not
+    have a full specification of the numbers supported by Praat, but they may
+    contain a decimal point or scientific notation. Numbers use a `.` for the 
+    decimal point character. `.5` is not a number because it doesn't start with
+    a plus, minus or digit.
+    
+  - A number is "left free-standing" (my terminology). It must be preceded by
+    a space or newline (the file start doesn't make sense). From a valid start
+    of a number, characters are read until the sequence of characters would no
+    longer yield a number. Any additional characters until the next space,
+    newline, or file boundary are ignored. In `100ms` and `+100e1ms`, for
+    example, the final `ms` are characters are ignored.
+  
+  - Everything else is a comment and ignored. I differentiate between kinds of
+    comments. This is my terminology, not Praat's.
+  
+  - **"Strong" comments** start with a `!` and end with a new line (`\n`).
+  
+  - **"Weak" comments** would be any token that does not start like a string or
+    number. In the long format textgrid, `size = 1` would be two ignored weak
+    comments (`size`, `=`) and a number (`1`).
+
+The allowance for characters on the right side of numbers is the major
+difference between the description of the Praat format and the one used in this
+package.
+
+
+
+
+
+## Reference R implementation for textgrid tokenization
+
+Given a vector of characters from a Praat .TextGrid file, we want a list of 
+strings and numbers contained in the file. For example, here are the characters
+from the short textgrid file and the output of the R-based tokenization:
+
+```{r}
+tg_characters <- examples[2] |> 
+  strsplit("") |> 
+  unlist()
+
+tg_characters
+
+tg_characters |> 
+  readtextgrid:::r_tokenize_textgrid_chars() |> 
+  str()
+```
+
+Some comments about this function:
+
+  - `r_tokenize_textgrid_chars()` is not an exported or supported function. That
+    is why it needs to be accessed with the triple colon namespace operator
+    `:::`. 
+  - The function was the intended implementation for the package until I
+    converted the implementation to C++. I keep this R version around as a
+    reference implementation for testing the current C++ implementation.
+  - Don't use it.
+
+
+The big ideas in `r_tokenize_textgrid_chars()` are the following:
+
+  - We have three special states: `in_strong_comment`, `in_string`, and
+    `in_escaped_quote`. These determine how we interpret spaces, newlines, and
+    `"` characters. When `in_strong_comment` is true, we skip the character
+    iteration loop with `next` until we see a newline. When `in_escaped_quote`
+    is true, we skip the next iteration of the loop (to catch next to `"`).
+    When `in_string` is true, we keep collecting characters for the current
+    token until we see a closing `"`.
+
+  - When these states are all false *and* we see a space or newline, then we
+    have the end of current token. We extract the characters for the current
+    token, combine them into a single value, check the value and keep it if it
+    is a Praat string or Praat number. Then we reset the current token position
+    and advance.
+
+Everything else is book-keeping to check for a special state or initialize a new
+token.
+
+The complete code is given below. It is fairly well-commented but you don't 
+have to read it---just knowing the high-level details is sufficient.
+
+```{r, eval = FALSE}
+function(all_char) {
+  # The parser rules here follow the textgrid specifications
+  # <https://www.fon.hum.uva.nl/praat/manual/TextGrid_file_formats.html> EXCEPT
+  # when they contradict the behavior of Praat.exe. For example, the specs says
+  # the main literals are freestanding strings and numbers, where freestanding
+  # means that they have a whitespace or boundary (newline or file start/end).
+  # But Praat.exe can handle numbers like "10.00!comment". So, this parser
+  # gathers freestanding literals but only keeps ones that are strings or
+  # start with a valid number (the non-numeric characters are lopped off.)
+
+  in_strong_comment <- FALSE         # Comment mode: ! to new line \n
+  in_string <- FALSE                 # String mode: "Quote to quote"
+  in_escaped_quote <- FALSE          # Escaped quote: "" inside of a string
+
+  token_start <- integer(0)          # Start of current token
+  values <- vector(mode = "list")    # Collects completed values
+
+  for (i in seq_along(all_char)) {
+    cur_value_ready <- length(token_start) != 0
+    c <- all_char[i]
+    c_is_whitespace <- c %in% c(" ", "\n")
+    c_starts_string <- c == "\""
+
+    # Comments start with ! and end with \n. Skip characters in this mode.
+    if (!in_string & c == "!") {
+      in_strong_comment <- TRUE
+      next
+    }
+    if (in_strong_comment) {
+      if (c == "\n") in_strong_comment <- FALSE
+      next
+    }
+
+    # Whitespace delimits values so collect values if we see whitespace
+    if (c_is_whitespace & !in_string) {
+      # Skip whitespace if no values collected so far
+      if (!cur_value_ready) next
+
+      total_value <- all_char[seq(token_start, i - 1)] |>
+        paste0(collapse = "")
+      is_string <- all_char[token_start] == "\"" && all_char[i - 1] == "\""
+
+      # Collect only numbers and strings
+      if (r_tg_parse_is_number(total_value)) {
+        # Keep only the numeric part.
+        total_value <- total_value |> r_tg_parse_extract_number()
+        values <- c(values, total_value)
+      } else if (is_string) {
+        values <- c(values, total_value)
+      }
+      token_start <- integer(0)
+      next
+    }
+
+    # Store character if ending an escaped quote
+    if (in_escaped_quote) {
+      in_escaped_quote <- !in_escaped_quote
+      next
+    }
+
+    # Start or close string mode if we see "
+    if (c_starts_string) {
+      # Check for "" escapes
+      peek_c <- all_char[i + 1]
+      if (peek_c == "\"" & in_string) {
+        in_escaped_quote <- TRUE
+      } else {
+        in_string <- !in_string
+      }
+    }
+
+    if (!cur_value_ready) {
+      token_start <- i
+    }
+  }
+
+  values |>
+    lapply(r_tg_parse_convert_value)
+}
+```
+
+
+## C++ implementation
+
+Given the simple nature of the above R code and its relatively slow performance
+compared to the legacy version of the parser, I asked ChatGPT to help convert
+the R code into a C++ implementation based on the cpp11 package. I tried to make
+sure I understood every line and made my own comments to help my understanding.
+
+The C++ code is a straightforward translation of the R version. For example, 
+here is the part of the function that collects tokens when we see
+a space or newline:
+
+```c++
+    if (!in_string && is_ws(b)) {
+      if (have_token) {
+        size_t start = tok_start_byte;
+        size_t end   = (curr_char_byte == 0 ? 0 : prev_char_byte);
+        size_t len   = (end >= start) ? (end - start + 1) : 0;
+        if (len > 0) {
+          // do we have a string (start and end with ")
+          bool q = (static_cast<unsigned char>(src[start]) == 0x22) &&
+            (static_cast<unsigned char>(src[end])   == 0x22);
+          tokens.push_back(src.substr(start, len));
+          tokens_is_string.push_back(q);
+        }
+        have_token = false;
+      }
+      continue;
+    }
+```
+
+Some details are different: We extract tokens with a substring (`.substr()`)
+method, we delay checking whether the token is a number until later on, and we
+are accumulating results into lists (`tokens` and `tokens_is_string`). But the
+underlying logic is the same as the R version.
+
+The C++ function takes a single character value (one whole string) for the file
+contents and returns a list of the tokens in the file, whether each token is a
+Praat string, the numbers of characters of each token that form a number, and
+the value of that token's number:
+
+```{r}
+examples[2] |> 
+  readtextgrid:::cpp_tg_scan_tokens() |> 
+  as.data.frame()
+```
+
+Before I had figured out how to parse numbers with C++, I originally was going
+to use R code on the `token` column to figure out whether each token is a legal
+number or not. That's why this function returns a list of vectors with
+information about the tokens.
+
+Back in the R layer, the final tokens are selected using really basic vector 
+operations:
+
+```{r}
+readtextgrid:::tokenize_textgrid
+```
+
+An important part of this function is the `withr::with_locale(c(LC_NUMERIC =
+"C"), ... )` call. We are setting the locale for numbers to the C locale which
+means that `.` is the decimal point character, and not a comma as in some
+locales. 
+
+Parsing numbers is also handled by C++. I discovered that the standard 
+library `strtod()` function does exactly what we need:
+
+> Interprets a floating-point value in a byte string pointed to by `str`.
+> 
+> Function discards any whitespace characters (as determined by `isspace`) until
+> first non-whitespace character is found. Then it takes as many characters as
+> possible to form a valid floating-point representation and converts them to a
+> floating-point value. 
+>
+> -- https://en.cppreference.com/w/c/string/byte/strtof
+
+We include some additional logic to make sure that `.4` is illegal and to output
+a `NA_real_` for missing values, but otherwise, `strtod()` does the work for us.
+
+The number parsing function has its own function so that it can be tested on its
+own.
+
+```{r}
+test_nums <- c("+1.0", "000ms", "3e", "3E", "-2", "0xA", ".5", "+.0") 
+
+c(
+  test_nums = list(test_nums),
+  readtextgrid:::cpp_parse_praat_numbers(test_nums)
+)
+```
+
+One consequence of this approach is that we can parse other kinds of numbers
+like hexadecimal with exponents. It turns out that Praat can also parse these 
+numbers in a .TextGrid file as well.
+
+
+## Notes on testing 
+
+The package's folder `tests/testthat/test-data`  includes a series of .TextGrid 
+files for testing the parsing functions. One of these `hard-to-parse.TextGrid` 
+collects as many edge cases as I can imagine.
+
+The C++ implementation is tested against the legacy parser on easy long-format 
+textgrid files and against the pure R implementation on other test textgrid 
+files, including `hard-to-parse.TextGrid`.
+
+The folder `tests/testthat/test-data/praat-test` include some tests of whether
+Praat can open a file or not. Files that fail to open start with `fail-` and 
+files that open start with `okay-`. We only support the only the syntactic
+features in the `okay-` files.
+
+## Notes on the Praat source code
+
+I did not rely on the Praat source code but I tried! The Praat source code has 
+to read in all kinds of text files so there is not an obvious `read_textgrid()`-like function for parsing a .TextGrid file. Still, I was able 
+to find how numbers a read in from a text file.
+
+The primitive data types of Praat are defined in the `Melder` folder. The
+`abcio.cpp` files has functions like `getReal()` for reading a float from text.
+`getReal()` calls `Melder_a8tof()` function in `melder_atof.cpp` to convert
+strings into numbers, and this function function in turn calls
+`findEndOfNumericString()` which processes numbers character by character.
+

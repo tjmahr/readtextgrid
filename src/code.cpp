@@ -17,8 +17,7 @@ list cpp_tg_scan_tokens(std::string src) {
   const size_t nbytes = src.size();
 
   writable::strings tokens;
-  writable::logicals is_string;
-  writable::logicals is_number;
+  writable::logicals tokens_is_string;
 
   bool in_comment = false;
   bool in_string  = false;
@@ -71,7 +70,7 @@ list cpp_tg_scan_tokens(std::string src) {
           bool q = (static_cast<unsigned char>(src[start]) == 0x22) &&
             (static_cast<unsigned char>(src[end])   == 0x22);
           tokens.push_back(src.substr(start, len));
-          is_string.push_back(q);
+          tokens_is_string.push_back(q);
         }
         have_token = false;
       }
@@ -103,7 +102,7 @@ list cpp_tg_scan_tokens(std::string src) {
   list number_data = cpp_parse_praat_numbers(tokens);
   writable::list out(4);
   out[0] = tokens;                         // strings
-  out[1] = is_string;                      // writable::logicals
+  out[1] = tokens_is_string;               // writable::logicals
   out[2] = number_data[0];                 // prefix_len (integers)
   out[3] = number_data[1];                 // value (doubles)
   out.attr("names") = writable::strings({"tokens", "is_string", "num_prefix", "num_value"});
