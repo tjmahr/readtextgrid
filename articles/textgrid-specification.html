@@ -71,7 +71,7 @@ readtextgrid package. It is intended for developers maintaining the
 parser or for developers in other languages, not for end users of the
 package.</em></p>
 <p>In this article, I describe the specification of the .TextGrid file
-format used in this package, how it differs than the documented
+format used in this package, note how it differs from the documented
 specification provided by Praat, and provide a high-level overview of R
 code and a C++ translation that can parse .TextGrid files.</p>
 <div class="section level2">
@@ -471,7 +471,7 @@ vector operations:</p>
 <span><span class="co">#&gt;     out[is_number[keep]] &lt;- res$num_value[is_number]</span></span>
 <span><span class="co">#&gt;     out</span></span>
 <span><span class="co">#&gt; }</span></span>
-<span><span class="co">#&gt; &lt;bytecode: 0x55f5ce0a4a40&gt;</span></span>
+<span><span class="co">#&gt; &lt;bytecode: 0x55a146ca8870&gt;</span></span>
 <span><span class="co">#&gt; &lt;environment: namespace:readtextgrid&gt;</span></span></code></pre></div>
 <p>An important part of this function is the
 <code>withr::with_locale(c(LC_NUMERIC = "C"), ... )</code> call. We are
