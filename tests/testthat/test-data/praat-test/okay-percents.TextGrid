@@ -24,8 +24,8 @@ item []:
         class = "TextTier" 
         name = "points" 
         xmin = 0 
-        xmax = 1 
-        points: size = 4 
+        xmax = 3
+        points: size = 5
         points [1]:
             number = 10% 
             mark = "10% -> 0.1" 
@@ -38,3 +38,6 @@ item []:
         points [4]:
             number = 0.90ms% 
             mark = "0.90ms% -> 0.9" 
+        points [5]:
+            number = 2E
+            mark = "1e% -> 0.9" 

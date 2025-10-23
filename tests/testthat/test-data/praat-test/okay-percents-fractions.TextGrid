@@ -1,0 +1,23 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 00000.0 
+xmax = 3 
+tiers? <exists> 
+size = 1 
+item []: 
+    item [1]:
+        class = "TextTier" 
+        name = "points" 
+        xmin = 0 
+        xmax = 1 
+        points: size = 3 
+        points [1]:
+            number = 2/200% 
+            mark = "2/200% -> 1.0" 
+        points [2]:
+            number = 300%/2 
+            mark = "300%/2 -> 1.5" 
+        points [3]:
+            number = 400%/200% 
+            mark = "400%/200% -> 2.0" 

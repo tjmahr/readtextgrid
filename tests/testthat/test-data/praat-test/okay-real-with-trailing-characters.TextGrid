@@ -11,7 +11,7 @@ item []:
         name = "Mary"
         xmin = 0e
         xmax = 2E1ignored
-        intervals: size = 3E
+        intervals: size = 5E
         intervals [1]:
             xmin = 0
             xmax = 5e-1ignored
@@ -22,5 +22,13 @@ item []:
             text = ""
         intervals [3]:
             xmin = 1.0e1ignored
-            xmax = 20
+            xmax = 14
             text = ""
+        intervals [4]:
+            xmin = 14eignored
+            xmax = 16ignored
+            text = "s"
+        intervals [5]:
+            xmin = 16
+            xmax = 20
+            text = "s"
