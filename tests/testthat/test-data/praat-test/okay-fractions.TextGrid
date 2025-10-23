@@ -1,0 +1,45 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 00000.0 
+xmax = 3 
+tiers? <exists> 
+size = 2 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "intervals" 
+        xmin = 0 
+        xmax = 3 
+        intervals: size = 4
+        intervals [1]:
+            xmin = 0/1 
+            xmax = 1/2 
+            text = "0/1 to 1/2  (0 to 0.5)" 
+        intervals [2]:
+            xmin = 1/2 
+            xmax = 6/4  
+            text = "1/2 to 6/4  (0.5 to 1.5)" 
+        intervals [3]:
+            xmin = +3/2 
+            xmax = 5.0/+2.0  
+            text = "+3/2 to 5.0/+2.0  (1.5 to 2.5)" 
+        intervals [4]:
+            xmin = -5/-2 
+            xmax = -3e0/-1e0  
+            text = "-5/-2 to -3e0/-1e0  (2.5 to 3)" 
+    item [2]:
+        class = "TextTier" 
+        name = "points" 
+        xmin = 0 
+        xmax = 1 
+        points: size = 3 
+        points [1]:
+            number = 1/10 
+            mark = "1/10 -> 0.1" 
+        points [2]:
+            number = -1/-2 
+            mark = "-1/-2 -> 0.5" 
+        points [3]:
+            number = 16e-1/2 
+            mark = "16e-1/2 -> 0.8" 

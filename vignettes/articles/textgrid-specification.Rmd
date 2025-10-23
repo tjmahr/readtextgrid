@@ -66,10 +66,10 @@ stopifnot(length(unique(example_tgs)) == 1)
 It is intended for developers maintaining the parser or for developers in other 
 languages, not for end users of the package.*
 
-In this article, I describe the specification of the .TextGrid file format 
-used in this package, how it differs than the documented specification provided
-by Praat, and provide a high-level overview of R code and a C++ 
-translation that can parse .TextGrid files.
+In this article, I describe the specification of the .TextGrid file format used
+in this package, note how it differs from the documented specification provided
+by Praat, and provide a high-level overview of R code and a C++ translation that
+can parse .TextGrid files.
 
 ## Example .TextGrid file contents
 
