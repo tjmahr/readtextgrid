@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">readtextgrid</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,22 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.2" id="readtextgrid-012">readtextgrid 0.1.2<a class="anchor" aria-label="anchor" href="#readtextgrid-012"></a></h2><p class="text-muted">CRAN release: 2024-03-07</p>
+<ul><li>
+<code><a href="../reference/read_textgrid.html">read_textgrid()</a></code> now manually parses textgrids and can handle short-format textgrids. (<a href="https://github.com/tjmahr/readtextgrid/issues/4" class="external-link">#4</a>, <a href="https://github.com/tjmahr/readtextgrid/issues/16" class="external-link">#16</a>, initial parser by <a href="https://github.com/JoFrhwld" class="external-link">@JoFrhwld</a>). Part of the parsing is done in C++ so the new manual parser is faster than the legacy version.</li>
+<li>The new parser is documented in a non-package supplemental vignette called “Textgrid specification” on the package website.</li>
+<li>Original package functions are available in <code><a href="../reference/read_textgrid.html">legacy_read_textgrid()</a></code>.</li>
+<li>
+<code><a href="../reference/read_textgrid.html">legacy_read_textgrid()</a></code> un-escapes <code>A ""quote"" word</code> to <code>A "quoted" word</code>.</li>
+<li>
+<code><a href="../reference/read_textgrid.html">legacy_read_textgrid()</a></code> can handle interval text with line breaks in them.</li>
+<li>New function <code><a href="../reference/pivot_textgrid_tiers.html">pivot_textgrid_tiers()</a></code> to pivot out nested textgrid intervals into a wide dataframe. For example, if a forced aligner has a <code>words</code> and <code>phones</code> tier, we can pivot the <code>words</code> and <code>phones</code> intervals into a dataframe with one row per <code>phones</code> intervals and with columns <code>words</code>, <code>words_xmin</code>, <code>words_xmax</code>, <code>phones</code>, <code>phones_xmin</code>, <code>phones_xmax</code>, etc. (<a href="https://github.com/tjmahr/readtextgrid/issues/10" class="external-link">#10</a>, request of <a href="https://github.com/stefanocoretta" class="external-link">@stefanocoretta</a>)</li>
+<li>Testing suite includes a short-format textgrid, a short-format textgrid with inline comments, and a textgrid with escaped <code>"</code> characters. (<a href="https://github.com/JoFrhwld" class="external-link">@JoFrhwld</a>)</li>
+<li>Testing suit includes an adversarial textgrid to challenge parsing.</li>
+<li>Support ELAN-generated textgrids. (<a href="https://github.com/tjmahr/readtextgrid/issues/11" class="external-link">#11</a>, <a href="https://github.com/djvill" class="external-link">@djvill</a>)</li>
+<li>Raised required R version to 4.3.0. (April 2023)</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.2" id="readtextgrid-012-1">readtextgrid 0.1.2<a class="anchor" aria-label="anchor" href="#readtextgrid-012-1"></a></h2><p class="text-muted">CRAN release: 2024-03-07</p>
 <ul><li>Add <code>encoding</code> argument to <code><a href="../reference/read_textgrid.html">read_textgrid()</a></code>. (<a href="https://github.com/tjmahr/readtextgrid/issues/7" class="external-link">#7</a>, <a href="https://github.com/tjmahr/readtextgrid/issues/8" class="external-link">#8</a>, <a href="https://github.com/tjmahr/readtextgrid/issues/9" class="external-link">#9</a>, <a href="https://github.com/jonorthwash" class="external-link">@jonorthwash</a>)</li>
 <li>Include example UTF-16 textgrid for testing.</li>
 <li>Remove magrittr dependency. (<a href="https://github.com/tjmahr/readtextgrid/issues/5" class="external-link">#5</a>, <a href="https://github.com/JoFrhwld" class="external-link">@JoFrhwld</a>)</li>
