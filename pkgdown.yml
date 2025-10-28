@@ -3,7 +3,7 @@ pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   articles/textgrid-specification: textgrid-specification.html
-last_built: 2025-10-27T20:09Z
+last_built: 2025-10-28T14:48Z
 urls:
   reference: https://www.tjmahr.com/readtextgrid/reference
   article: https://www.tjmahr.com/readtextgrid/articles
