@@ -1,4 +1,4 @@
-# readtextgrid 0.1.2
+# readtextgrid 0.2.0
 
 * `read_textgrid()` now manually parses textgrids and can handle short-format 
   textgrids. (#4, #16, initial parser by @JoFrhwld). Part of the parsing is done
